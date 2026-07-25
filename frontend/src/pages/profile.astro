@@ -1,0 +1,16 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+import ProfileForm from '../components/ProfileForm.tsx';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+---
+
+<Layout title="My Profile — Secerless">
+  <section class="max-w-md mx-auto px-4 py-16">
+    <h1 class="text-3xl font-bold mb-6 text-center">{t('profile.title')}</h1>
+    <ProfileForm client:load lang={lang} />
+  </section>
+</Layout>
+

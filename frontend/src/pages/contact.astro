@@ -1,0 +1,30 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Contact & Collaborate — Secerless">
+  <section class="max-w-xl mx-auto px-4 py-16">
+    <h1 class="text-4xl font-bold mb-2">Questions & Collaboration</h1>
+    <p class="opacity-70 mb-8">
+      Got a question about a recipe, or want to collaborate? Send a message below.
+    </p>
+
+    <!-- Static form for now — Phase 2/6 will wire this to POST /api/contact -->
+    <form class="flex flex-col gap-4">
+      <label class="form-control">
+        <span class="label-text mb-1">Name</span>
+        <input type="text" placeholder="Your name" class="input input-bordered w-full" required />
+      </label>
+      <label class="form-control">
+        <span class="label-text mb-1">Email</span>
+        <input type="email" placeholder="you@example.com" class="input input-bordered w-full" required />
+      </label>
+      <label class="form-control">
+        <span class="label-text mb-1">Message</span>
+        <textarea class="textarea textarea-bordered w-full h-32" placeholder="Your question or idea..." required></textarea>
+      </label>
+      <button type="submit" class="btn btn-primary mt-2">Send Message</button>
+    </form>
+  </section>
+</Layout>
+

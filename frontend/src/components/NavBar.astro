@@ -1,0 +1,40 @@
+---
+const navLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/recipes', label: 'Recipes' },
+  { href: '/blog', label: 'Blog' },
+  { href: '/about', label: 'About Me' },
+  { href: '/contact', label: 'Contact' },
+];
+---
+
+<div class="navbar bg-base-100 shadow-sm px-4 sm:px-8 sticky top-0 z-50">
+  <div class="navbar-start">
+    <a href="/" class="btn btn-ghost text-xl font-bold">🍳 Secerless</a>
+  </div>
+
+  <div class="navbar-center hidden lg:flex">
+    <ul class="menu menu-horizontal px-1 gap-1">
+      {navLinks.map((link) => (
+        <li><a href={link.href}>{link.label}</a></li>
+      ))}
+    </ul>
+  </div>
+
+  <div class="navbar-end gap-2">
+    <a href="/favorites" class="btn btn-ghost btn-circle" title="Favorites">
+      ❤️
+    </a>
+    <a href="/login" class="btn btn-primary btn-sm">Log In</a>
+
+    <div class="dropdown dropdown-end lg:hidden">
+      <div tabindex="0" role="button" class="btn btn-ghost btn-circle">☰</div>
+      <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-10 mt-3 w-52 p-2 shadow">
+        {navLinks.map((link) => (
+          <li><a href={link.href}>{link.label}</a></li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</div>
+

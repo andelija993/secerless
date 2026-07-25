@@ -1,0 +1,18 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Log In — Secerless">
+  <section class="max-w-md mx-auto px-4 py-16">
+    <h1 class="text-3xl font-bold mb-6 text-center">Log In</h1>
+    <form class="flex flex-col gap-4">
+      <input type="email" placeholder="Email" class="input input-bordered w-full" required />
+      <input type="password" placeholder="Password" class="input input-bordered w-full" required />
+      <button type="submit" class="btn btn-primary">Log In</button>
+    </form>
+    <p class="text-center mt-4 text-sm opacity-70">
+      Don't have an account? <a href="/register" class="link link-primary">Sign up</a>
+    </p>
+  </section>
+</Layout>
+
