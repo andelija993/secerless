@@ -17,17 +17,17 @@ export const ui = {
     'nav.about': 'About Me',
     'nav.contact': 'Contact',
 
-    'home.title': 'Cooking, shared. 🍲',
+    'home.title': 'Šećerless — Recipes worth sharing. 🍲',
     'home.subtitle':
-      "Real recipes from my kitchen to yours — plus stories, tips, and a place to ask questions or collaborate.",
+      "What started as sugar-free treats has grown into all my favorite recipes — from my kitchen to yours, plus stories, tips, and a place to ask questions or collaborate.",
     'home.cta': 'Browse Recipes',
     'home.topRecipes': '🔥 Top Recipes',
     'home.sliderNote': '(This will become a proper animated carousel React island in Phase 8 👀)',
 
     'about.title': 'About Me',
     'about.p1':
-      "Hi, I'm [Your Name]! I've been sharing recipes on Instagram for a while, and now I'm bringing them all together here — with the full stories, exact measurements, and step-by-step instructions that don't always fit in a caption.",
-    'about.p2': 'This space is about real home cooking: comfort food, family recipes, and the occasional kitchen experiment. Feel free to reach out on the',
+      "Hi, I'm [Your Name]! Šećerless started out as a page for sugar-free desserts on Instagram — but lately I've been cooking (and sharing) everything, from full dinners to family classics. Now it's all getting a proper home here, with the full stories, exact measurements, and step-by-step instructions that don't always fit in a caption.",
+    'about.p2': 'This space is about real home cooking in all its forms: sugar-free treats, comfort food, family recipes, and the occasional kitchen experiment. Feel free to reach out on the',
     'about.p2Link': 'contact page',
     'about.p2End': 'with questions or collaboration ideas.',
 
@@ -97,17 +97,17 @@ export const ui = {
     'nav.about': 'O meni',
     'nav.contact': 'Kontakt',
 
-    'home.title': 'Kuvanje, podeljeno. 🍲',
+    'home.title': 'Šećerless — Recepti vredni deljenja. 🍲',
     'home.subtitle':
-      'Pravi recepti iz moje kuhinje za vašu — uz priče, savete i mesto gde možete da postavite pitanja ili predložite saradnju.',
+      'Sve je počelo kao stranica za deserte bez šećera, a preraslo je u sve moje omiljene recepte — iz moje kuhinje za vašu, uz priče, savete i mesto gde možete da postavite pitanja ili predložite saradnju.',
     'home.cta': 'Pogledaj recepte',
     'home.topRecipes': '🔥 Najbolji recepti',
     'home.sliderNote': '(Ovo će postati pravi animirani slajder u Fazi 8 👀)',
 
     'about.title': 'O meni',
     'about.p1':
-      'Zdravo, ja sam [Vaše Ime]! Neko vreme delim recepte na Instagramu, a sada sve to okupljam ovde — sa kompletnim pričama, tačnim merama i koracima koji ne staju uvek u opis fotografije.',
-    'about.p2': 'Ovaj prostor je posvećen pravom domaćem kuvanju: udobnoj hrani, porodičnim receptima i pokojem eksperimentu u kuhinji. Slobodno me kontaktirajte preko',
+      'Zdravo, ja sam [Vaše Ime]! Šećerless je počeo kao Instagram stranica za deserte bez šećera — ali u poslednje vreme kuvam (i delim) baš sve, od kompletnih večera do porodičnih klasika. Sada sve to dobija pravi dom ovde, sa kompletnim pričama, tačnim merama i koracima koji ne staju uvek u opis fotografije.',
+    'about.p2': 'Ovaj prostor je posvećen pravom domaćem kuvanju u svim oblicima: deserti bez šećera, udobna hrana, porodični recepti i pokoji eksperiment u kuhinji. Slobodno me kontaktirajte preko',
     'about.p2Link': 'kontakt strane',
     'about.p2End': 'sa pitanjima ili idejama za saradnju.',
 

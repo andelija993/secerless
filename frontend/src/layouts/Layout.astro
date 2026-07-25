@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import NavBar from '../components/NavBar.astro';
 import Footer from '../components/Footer.astro';
+import { getLangFromUrl } from '../i18n/utils';
 
 interface Props {
   title?: string;
@@ -9,12 +10,14 @@ interface Props {
 }
 
 const {
-  title = 'Secerless — Recipes & Stories',
-  description = 'Homemade recipes, food stories and collaboration.',
+  title = 'Šećerless — Recipes, Stories & Collaboration',
+  description = 'Home recipes, food stories and collaboration — from sugar-free treats to everything else.',
 } = Astro.props;
+
+const lang = getLangFromUrl(Astro.url);
 ---
 
-<html lang="en" data-theme="secerless">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -22,6 +25,18 @@ const {
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
+    <!--
+      Set the theme BEFORE the page paints, so there's no flash of the
+      wrong theme. Reads saved preference, falls back to OS preference.
+    -->
+    <script is:inline>
+      (function () {
+        const saved = localStorage.getItem('secerless_theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const theme = saved || (prefersDark ? 'secerless-dark' : 'secerless');
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
   </head>
   <body class="min-h-screen flex flex-col bg-base-100 text-base-content">
     <NavBar />

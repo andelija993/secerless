@@ -75,70 +75,70 @@ export default function ProfileMenu({ lang }: Props) {
   // (Exposed so the Login page placeholder can call it — see login.astro note)
 
   return (
-    <div class="relative" ref={menuRef}>
+    <div className="relative" ref={menuRef}>
       <button
         onClick={() => setOpen((o) => !o)}
-        class="btn btn-circle btn-ghost avatar placeholder"
+        className="btn btn-circle btn-ghost avatar placeholder"
         aria-label="Open profile menu"
       >
         {user?.avatarUrl ? (
-          <div class="w-10 rounded-full">
+          <div className="w-10 rounded-full">
             <img src={user.avatarUrl} alt={`${user.firstName} ${user.lastName}`} />
           </div>
         ) : (
-          <div class="bg-primary text-primary-content rounded-full w-10 flex items-center justify-center font-semibold">
+          <div className="bg-primary text-primary-content rounded-full w-10 flex items-center justify-center font-semibold">
             {user ? getInitials(user) : '👤'}
           </div>
         )}
       </button>
 
       {open && (
-        <div class="absolute right-0 mt-2 w-64 bg-base-100 rounded-box shadow-xl border border-base-300 p-3 z-50">
+        <div className="absolute right-0 mt-2 w-64 bg-base-100 rounded-box shadow-xl border border-base-300 p-3 z-50">
           {/* Identity header */}
-          <div class="px-2 py-1 mb-2">
-            <p class="font-semibold">
+          <div className="px-2 py-1 mb-2">
+            <p className="font-semibold">
               {user ? `${user.firstName} ${user.lastName}` : t('profile.guest')}
             </p>
           </div>
 
-          <div class="divider my-1"></div>
+          <div className="divider my-1"></div>
 
           {/* Auth-dependent links */}
           {user ? (
             <>
-              <a href={translatePath('/profile')} class="btn btn-ghost btn-sm justify-start w-full">
+              <a href={translatePath('/profile')} className="btn btn-ghost btn-sm justify-start w-full">
                 {t('profile.myProfile')}
               </a>
-              <a href={translatePath('/favorites')} class="btn btn-ghost btn-sm justify-start w-full">
+              <a href={translatePath('/favorites')} className="btn btn-ghost btn-sm justify-start w-full">
                 ❤️ {t('profile.favorites')}
               </a>
             </>
           ) : (
             <>
-              <a href={translatePath('/login')} class="btn btn-primary btn-sm justify-start w-full mb-1">
+              <a href={translatePath('/login')} className="btn btn-primary btn-sm justify-start w-full mb-1">
                 {t('profile.login')}
               </a>
-              <a href={translatePath('/register')} class="btn btn-ghost btn-sm justify-start w-full">
+              <a href={translatePath('/register')} className="btn btn-ghost btn-sm justify-start w-full">
                 {t('profile.signup')}
               </a>
             </>
           )}
 
-          <div class="divider my-1"></div>
+          <div className="divider my-1"></div>
 
           {/* Language switcher */}
-          <div class="px-2 py-1">
-            <p class="text-xs uppercase opacity-60 mb-1">{t('profile.language')}</p>
-            <div class="join w-full">
+          <div className="px-2 py-1">
+            <p className="text-xs uppercase opacity-60 mb-1">{t('profile.language')}</p>
+            <div className="join w-full">
               <button
                 onClick={() => switchLanguage('en')}
-                class={`btn btn-sm join-item flex-1 ${lang === 'en' ? 'btn-primary' : 'btn-outline'}`}
+                className={`btn btn-sm join-item flex-1 ${lang === 'en' ? 'btn-primary' : 'btn-outline'}`}
               >
                 EN
               </button>
               <button
                 onClick={() => switchLanguage('sr')}
-                class={`btn btn-sm join-item flex-1 ${lang === 'sr' ? 'btn-primary' : 'btn-outline'}`}
+                className={`btn btn-sm join-item flex-1 ${lang === 'sr' ? 'btn-primary' : 'btn-outline'}`}
               >
                 SR
               </button>
@@ -146,17 +146,17 @@ export default function ProfileMenu({ lang }: Props) {
           </div>
 
           {/* Theme switcher */}
-          <div class="px-2 py-1 mt-2">
-            <p class="text-xs uppercase opacity-60 mb-1">{t('profile.theme')}</p>
-            <button onClick={toggleTheme} class="btn btn-outline btn-sm w-full justify-start">
+          <div className="px-2 py-1 mt-2">
+            <p className="text-xs uppercase opacity-60 mb-1">{t('profile.theme')}</p>
+            <button onClick={toggleTheme} className="btn btn-outline btn-sm w-full justify-start">
               {theme === 'secerless' ? `☀️ ${t('profile.themeLight')}` : `🌙 ${t('profile.themeDark')}`}
             </button>
           </div>
 
           {user && (
             <>
-              <div class="divider my-1"></div>
-              <button onClick={handleLogout} class="btn btn-ghost btn-sm justify-start w-full text-error">
+              <div className="divider my-1"></div>
+              <button onClick={handleLogout} className="btn btn-ghost btn-sm justify-start w-full text-error">
                 {t('profile.logout')}
               </button>
             </>

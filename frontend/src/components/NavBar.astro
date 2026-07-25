@@ -1,16 +1,26 @@
 ---
+import ProfileMenu from './ProfileMenu.tsx';
+import { getLangFromUrl, useTranslations, useTranslatedPath } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const translatePath = useTranslatedPath(lang);
+
 const navLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/recipes', label: 'Recipes' },
-  { href: '/blog', label: 'Blog' },
-  { href: '/about', label: 'About Me' },
-  { href: '/contact', label: 'Contact' },
+  { href: translatePath('/'), label: t('nav.home') },
+  { href: translatePath('/recipes'), label: t('nav.recipes') },
+  { href: translatePath('/blog'), label: t('nav.blog') },
+  { href: translatePath('/about'), label: t('nav.about') },
+  { href: translatePath('/contact'), label: t('nav.contact') },
 ];
 ---
 
 <div class="navbar bg-base-100 shadow-sm px-4 sm:px-8 sticky top-0 z-50">
   <div class="navbar-start">
-    <a href="/" class="btn btn-ghost text-xl font-bold">🍳 Secerless</a>
+    <a href={translatePath('/')} class="btn btn-ghost text-xl font-bold gap-2 px-2">
+      <img src="/logo.png" alt="Šećerless" class="h-9 w-9 rounded-full object-cover" />
+      Šećerless
+    </a>
   </div>
 
   <div class="navbar-center hidden lg:flex">
@@ -22,10 +32,7 @@ const navLinks = [
   </div>
 
   <div class="navbar-end gap-2">
-    <a href="/favorites" class="btn btn-ghost btn-circle" title="Favorites">
-      ❤️
-    </a>
-    <a href="/login" class="btn btn-primary btn-sm">Log In</a>
+    <ProfileMenu client:load lang={lang} />
 
     <div class="dropdown dropdown-end lg:hidden">
       <div tabindex="0" role="button" class="btn btn-ghost btn-circle">☰</div>

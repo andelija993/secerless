@@ -6,19 +6,49 @@
   name: "secerless";
   default: true;
   color-scheme: light;
-  --color-base-100: oklch(98% 0.01 80);
-  --color-base-200: oklch(95% 0.02 80);
-  --color-base-300: oklch(90% 0.03 80);
-  --color-base-content: oklch(25% 0.02 60);
-  --color-primary: oklch(62% 0.19 35);
-  --color-primary-content: oklch(98% 0.01 80);
-  --color-secondary: oklch(72% 0.15 145);
-  --color-secondary-content: oklch(98% 0.01 80);
-  --color-accent: oklch(80% 0.16 85);
-  --color-accent-content: oklch(20% 0.02 60);
-  --color-neutral: oklch(30% 0.02 60);
-  --color-neutral-content: oklch(98% 0.01 80);
+  /* Cream / off-white background, matching the logo's inner circle */
+  --color-base-100: oklch(97% 0.015 75);
+  --color-base-200: oklch(93% 0.02 75);
+  --color-base-300: oklch(88% 0.025 75);
+  --color-base-content: oklch(22% 0.03 20);
+  /* Deep burgundy/wine red — the logo's signature color */
+  --color-primary: oklch(38% 0.13 20);
+  --color-primary-content: oklch(97% 0.015 75);
+  /* Softer rose/berry tone for secondary accents (cherries on the cake) */
+  --color-secondary: oklch(55% 0.16 15);
+  --color-secondary-content: oklch(97% 0.015 75);
+  /* Warm cream/gold accent */
+  --color-accent: oklch(85% 0.06 85);
+  --color-accent-content: oklch(25% 0.03 20);
+  --color-neutral: oklch(25% 0.03 20);
+  --color-neutral-content: oklch(97% 0.015 75);
   --radius-box: 1rem;
   --radius-field: 0.5rem;
   --radius-selector: 1rem;
 }
+
+@plugin "daisyui/theme" {
+  name: "secerless-dark";
+  default: false;
+  prefersdark: true;
+  color-scheme: dark;
+  --color-base-100: oklch(20% 0.025 20);
+  --color-base-200: oklch(16% 0.025 20);
+  --color-base-300: oklch(12% 0.025 20);
+  --color-base-content: oklch(93% 0.015 75);
+  --color-primary: oklch(55% 0.15 20);
+  --color-primary-content: oklch(97% 0.015 75);
+  --color-secondary: oklch(62% 0.16 15);
+  --color-secondary-content: oklch(97% 0.015 75);
+  --color-accent: oklch(75% 0.07 85);
+  --color-accent-content: oklch(18% 0.03 20);
+  --color-neutral: oklch(90% 0.015 75);
+  --color-neutral-content: oklch(18% 0.03 20);
+  --radius-box: 1rem;
+  --radius-field: 0.5rem;
+  --radius-selector: 1rem;
+}
+
+
+
+

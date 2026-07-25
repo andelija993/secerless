@@ -1,0 +1,126 @@
+// Prisma schema — this file defines our database structure.
+// Docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String // bcrypt hash — never store plain text passwords
+  firstName String?
+  lastName  String?
+  avatarUrl String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipes   Recipe[]   @relation("RecipeAuthor")
+  blogPosts BlogPost[] @relation("BlogPostAuthor")
+  favorites Favorite[]
+}
+
+model Category {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  slug    String   @unique
+  recipes Recipe[]
+}
+
+model Recipe {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ingredients Ingredient[]
+  steps       Step[]
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  authorId String
+  author   User   @relation("RecipeAuthor", fields: [authorId], references: [id])
+
+  favorites Favorite[]
+  comments  Comment[]
+}
+
+// Kept as separate rows (rather than one big text blob) so each
+// ingredient/step can be edited, reordered, or queried individually.
+model Ingredient {
+  id       String @id @default(cuid())
+  text     String
+  order    Int    @default(0)
+  recipeId String
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+}
+
+model Step {
+  id       String @id @default(cuid())
+  text     String
+  order    Int    @default(0)
+  recipeId String
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+}
+
+model BlogPost {
+  id            String   @id @default(cuid())
+  title         String
+  slug          String   @unique
+  content       String // markdown
+  coverImageUrl String?
+  published     Boolean  @default(true)
+  publishedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  authorId String
+  author   User   @relation("BlogPostAuthor", fields: [authorId], references: [id])
+
+  comments Comment[]
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  recipeId String
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, recipeId]) // a user can only favorite a recipe once
+}
+
+// Used for both the public "Questions & Collaboration" contact form
+// and (later) comments left directly on a recipe or blog post.
+model Comment {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+
+  recipeId String?
+  recipe   Recipe? @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  postId String?
+  post   BlogPost? @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+

@@ -1,18 +1,44 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { getLangFromUrl, useTranslations, useTranslatedPath } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const translatePath = useTranslatedPath(lang);
 ---
 
-<Layout title="Log In — Secerless">
+<Layout title="Log In — Šećerless">
   <section class="max-w-md mx-auto px-4 py-16">
-    <h1 class="text-3xl font-bold mb-6 text-center">Log In</h1>
-    <form class="flex flex-col gap-4">
-      <input type="email" placeholder="Email" class="input input-bordered w-full" required />
-      <input type="password" placeholder="Password" class="input input-bordered w-full" required />
-      <button type="submit" class="btn btn-primary">Log In</button>
+    <h1 class="text-3xl font-bold mb-6 text-center">{t('login.title')}</h1>
+    <form id="login-form" class="flex flex-col gap-4">
+      <input id="login-email" type="email" placeholder={t('login.email')} class="input input-bordered w-full" required />
+      <input type="password" placeholder={t('login.password')} class="input input-bordered w-full" required />
+      <button type="submit" class="btn btn-primary">{t('login.submit')}</button>
     </form>
     <p class="text-center mt-4 text-sm opacity-70">
-      Don't have an account? <a href="/register" class="link link-primary">Sign up</a>
+      {t('login.noAccount')} <a href={translatePath('/register')} class="link link-primary">{t('login.signup')}</a>
     </p>
   </section>
+
+  <!--
+    TEMPORARY mock login — Phase 3 will replace this with a real POST to
+    the Express /api/auth/login endpoint + JWT cookie. For now this just
+    lets you preview the logged-in state of the profile menu.
+  -->
+  <script>
+    const form = document.getElementById('login-form') as HTMLFormElement;
+    form?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = (document.getElementById('login-email') as HTMLInputElement).value;
+      const namePart = email.split('@')[0] || 'User';
+      const mockUser = {
+        firstName: namePart.charAt(0).toUpperCase() + namePart.slice(1),
+        lastName: '',
+        avatarUrl: '',
+      };
+      localStorage.setItem('secerless_user', JSON.stringify(mockUser));
+      window.location.href = '/';
+    });
+  </script>
 </Layout>
 

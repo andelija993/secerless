@@ -3,6 +3,12 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 
+import recipeRoutes from './routes/recipes.js';
+import blogRoutes from './routes/blog.js';
+import categoryRoutes from './routes/categories.js';
+import contactRoutes from './routes/contact.js';
+import favoriteRoutes from './routes/favorites.js';
+
 dotenv.config();
 
 const app = express();
@@ -20,12 +26,17 @@ app.use(cookieParser());
 
 // --- Health check (useful to confirm the server is alive) ---
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Secerless API is running' });
+  res.json({ status: 'ok', message: 'Šećerless API is running' });
 });
 
-// --- Routes will be mounted here as we build them ---
-// import recipeRoutes from './routes/recipes.js';
-// app.use('/api/recipes', recipeRoutes);
+// --- Routes ---
+app.use('/api/recipes', recipeRoutes);
+app.use('/api/blog', blogRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/favorites', favoriteRoutes);
+// import authRoutes from './routes/auth.js'; // wired up in Phase 3
+// app.use('/api/auth', authRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);

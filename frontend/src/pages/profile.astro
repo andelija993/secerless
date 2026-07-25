@@ -7,7 +7,7 @@ const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 ---
 
-<Layout title="My Profile — Secerless">
+<Layout title="My Profile — Šećerless">
   <section class="max-w-md mx-auto px-4 py-16">
     <h1 class="text-3xl font-bold mb-6 text-center">{t('profile.title')}</h1>
     <ProfileForm client:load lang={lang} />

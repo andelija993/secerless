@@ -1,8 +1,9 @@
-# Secerless 🍲
+# Šećerless 🍰
 
 A personal recipe blog & food-story platform — built as a guided learning
-project. Recipes originally shared on Instagram, now getting a proper home
-with full write-ups, an admin CMS, and user favorites.
+project. Started as an Instagram page for sugar-free desserts, now growing
+into a full home for all recipes, with full write-ups, an admin CMS, and
+user favorites.
 
 ## Tech Stack
 
@@ -14,15 +15,17 @@ with full write-ups, an admin CMS, and user favorites.
 
 **Frontend** — `frontend/`
 - Astro (content-first, fast, SEO-friendly)
-- React islands for interactive pieces (login, favorites, admin forms, slider)
-- Tailwind CSS + DaisyUI (component styling)
+- React islands for interactive pieces (login, favorites, admin forms, slider, profile menu)
+- Tailwind CSS + DaisyUI (component styling, custom burgundy/cream theme matching the logo)
+- i18n: English + Serbian (`/` for English, `/sr/` for Serbian)
+- Light/Dark mode toggle (via the profile menu)
 
 ## Project Structure
 
 ```
 Secerless/
   backend/     Express API (routes, controllers, middleware, Prisma schema)
-  frontend/    Astro site (pages, layouts, components, React islands)
+  frontend/    Astro site (pages, layouts, components, React islands, i18n)
 ```
 
 ## Getting Started

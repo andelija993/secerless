@@ -1,29 +1,33 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
-<Layout title="Contact & Collaborate — Secerless">
+<Layout title="Contact & Collaborate — Šećerless">
   <section class="max-w-xl mx-auto px-4 py-16">
-    <h1 class="text-4xl font-bold mb-2">Questions & Collaboration</h1>
+    <h1 class="text-4xl font-bold mb-2">{t('contact.title')}</h1>
     <p class="opacity-70 mb-8">
-      Got a question about a recipe, or want to collaborate? Send a message below.
+      {t('contact.subtitle')}
     </p>
 
     <!-- Static form for now — Phase 2/6 will wire this to POST /api/contact -->
     <form class="flex flex-col gap-4">
       <label class="form-control">
-        <span class="label-text mb-1">Name</span>
-        <input type="text" placeholder="Your name" class="input input-bordered w-full" required />
+        <span class="label-text mb-1">{t('contact.name')}</span>
+        <input type="text" placeholder={t('contact.namePlaceholder')} class="input input-bordered w-full" required />
       </label>
       <label class="form-control">
-        <span class="label-text mb-1">Email</span>
+        <span class="label-text mb-1">{t('contact.email')}</span>
         <input type="email" placeholder="you@example.com" class="input input-bordered w-full" required />
       </label>
       <label class="form-control">
-        <span class="label-text mb-1">Message</span>
-        <textarea class="textarea textarea-bordered w-full h-32" placeholder="Your question or idea..." required></textarea>
+        <span class="label-text mb-1">{t('contact.message')}</span>
+        <textarea class="textarea textarea-bordered w-full h-32" placeholder={t('contact.messagePlaceholder')} required></textarea>
       </label>
-      <button type="submit" class="btn btn-primary mt-2">Send Message</button>
+      <button type="submit" class="btn btn-primary mt-2">{t('contact.submit')}</button>
     </form>
   </section>
 </Layout>

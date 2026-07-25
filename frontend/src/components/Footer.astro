@@ -1,11 +1,15 @@
 ---
+import { getLangFromUrl, useTranslations } from '../i18n/utils';
+
 const year = new Date().getFullYear();
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
 ---
 
 <footer class="footer footer-center bg-base-200 text-base-content p-8 mt-16">
   <aside>
-    <p>© {year} Secerless — recipes, stories & collaboration</p>
-    <p class="text-sm opacity-70">Built with Astro, React & Tailwind</p>
+    <p>© {year} Šećerless — {t('footer.tagline')}</p>
+    <p class="text-sm opacity-70">{t('footer.builtWith')}</p>
   </aside>
 </footer>
 

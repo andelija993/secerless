@@ -1,5 +1,10 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { getLangFromUrl, useTranslations, useTranslatedPath } from '../../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const translatePath = useTranslatedPath(lang);
 
 // Placeholder data until Phase 4 connects this to GET /api/recipes
 const recipes = [
@@ -9,12 +14,12 @@ const recipes = [
 ];
 ---
 
-<Layout title="Recipes — Secerless">
+<Layout title="Recipes — Šećerless">
   <section class="max-w-6xl mx-auto px-4 py-16">
-    <h1 class="text-4xl font-bold mb-8">All Recipes</h1>
+    <h1 class="text-4xl font-bold mb-8">{t('recipes.title')}</h1>
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {recipes.map((r) => (
-        <a href={`/recipes/${r.slug}`} class="card bg-base-100 shadow-md hover:shadow-xl transition-shadow">
+        <a href={translatePath(`/recipes/${r.slug}`)} class="card bg-base-100 shadow-md hover:shadow-xl transition-shadow">
           <figure><img src={r.image} alt={r.title} class="h-44 w-full object-cover" /></figure>
           <div class="card-body">
             <span class="badge badge-secondary badge-sm">{r.category}</span>

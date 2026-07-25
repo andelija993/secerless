@@ -1,5 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { getLangFromUrl, useTranslations, useTranslatedPath } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const translatePath = useTranslatedPath(lang);
 
 // Placeholder data — Phase 4 will replace this with a real API call to the Express backend.
 const topRecipes = [
@@ -9,27 +14,26 @@ const topRecipes = [
 ];
 ---
 
-<Layout title="Secerless — Recipes & Food Stories">
+<Layout title="Šećerless — Recipes & Food Stories">
   <!-- Hero -->
   <section class="hero min-h-[60vh] bg-gradient-to-br from-primary/10 to-secondary/10">
     <div class="hero-content text-center">
       <div class="max-w-2xl">
-        <h1 class="text-5xl font-bold mb-4">Cooking, shared. 🍲</h1>
+        <h1 class="text-5xl font-bold mb-4">{t('home.title')}</h1>
         <p class="py-4 text-lg opacity-80">
-          Real recipes from my kitchen to yours — plus stories, tips, and a
-          place to ask questions or collaborate.
+          {t('home.subtitle')}
         </p>
-        <a href="/recipes" class="btn btn-primary btn-lg">Browse Recipes</a>
+        <a href={translatePath('/recipes')} class="btn btn-primary btn-lg">{t('home.cta')}</a>
       </div>
     </div>
   </section>
 
   <!-- Top recipes slider (will become a React island carousel in Phase 8) -->
   <section class="max-w-6xl mx-auto px-4 py-16">
-    <h2 class="text-3xl font-bold mb-8 text-center">🔥 Top Recipes</h2>
+    <h2 class="text-3xl font-bold mb-8 text-center">{t('home.topRecipes')}</h2>
     <div class="grid md:grid-cols-3 gap-6">
       {topRecipes.map((r) => (
-        <a href={`/recipes/${r.slug}`} class="card bg-base-100 shadow-md hover:shadow-xl transition-shadow">
+        <a href={translatePath(`/recipes/${r.slug}`)} class="card bg-base-100 shadow-md hover:shadow-xl transition-shadow">
           <figure><img src={r.image} alt={r.title} class="h-48 w-full object-cover" /></figure>
           <div class="card-body">
             <h3 class="card-title">{r.title}</h3>
@@ -39,7 +43,7 @@ const topRecipes = [
       ))}
     </div>
     <p class="text-center text-sm opacity-50 mt-6">
-      (This will become a proper animated carousel React island in Phase 8 👀)
+      {t('home.sliderNote')}
     </p>
   </section>
 </Layout>
