@@ -34,14 +34,19 @@ const topRecipes = [
     <div class="grid md:grid-cols-3 gap-6">
       {topRecipes.map((r) => (
         <a href={translatePath(`/recipes/${r.slug}`)} class="card bg-base-100 shadow-md hover:shadow-xl transition-shadow">
-          <figure><img src={r.image} alt={r.title} class="h-48 w-full object-cover" /></figure>
+          <figure><img src={r.imageUrl ?? undefined} alt={r.title} class="h-48 w-full object-cover" /></figure>
           <div class="card-body">
             <h3 class="card-title">{r.title}</h3>
-            <p class="opacity-70">{r.excerpt}</p>
+            <p class="opacity-70">{r.description}</p>
           </div>
         </a>
       ))}
     </div>
+    {topRecipes.length === 0 && (
+      <p class="text-center opacity-60">
+        No recipes yet — add some via the API or admin dashboard (Phase 5)!
+      </p>
+    )}
     <p class="text-center text-sm opacity-50 mt-6">
       {t('home.sliderNote')}
     </p>

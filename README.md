@@ -48,9 +48,9 @@ npm run dev             # http://localhost:4321
 ## Roadmap / Phases
 
 1. ✅ Setup & tech decisions
-2. Backend API & data models (Prisma schema, CRUD routes)
+2. ✅ Backend API & data models (Prisma schema, CRUD routes)
 3. Authentication & authorization (JWT, admin vs user roles)
-4. Frontend structure & static pages connected to real API data
+4. ✅ Frontend structure & static pages connected to real API data
 5. Admin dashboard (create/edit recipes & posts, image upload)
 6. Public recipe/blog detail pages & filtering
 7. User accounts & favorites

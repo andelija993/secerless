@@ -1,0 +1,43 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getPosts, getPostBySlug } from '../../../lib/api';
+import { marked } from 'marked';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((p) => ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+const post = await getPostBySlug(slug!);
+
+if (!post) {
+  return Astro.redirect('/404');
+}
+
+const contentHtml = marked.parse(post.content);
+const authorName = [post.author?.firstName, post.author?.lastName].filter(Boolean).join(' ');
+const formattedDate = new Date(post.publishedAt).toLocaleDateString('sr-RS', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<Layout title={`${post.title} — Šećerless`}>
+  <article class="max-w-3xl mx-auto px-4 py-16 prose max-w-none">
+    {post.coverImageUrl && (
+      <img
+        src={post.coverImageUrl}
+        alt={post.title}
+        class="rounded-2xl w-full h-80 object-cover mb-8 not-prose"
+      />
+    )}
+    <h1>{post.title}</h1>
+    <p class="opacity-60 text-sm">
+      {authorName && <>Autor: {authorName} · </>}{formattedDate}
+    </p>
+    <div set:html={contentHtml} />
+  </article>
+</Layout>
+

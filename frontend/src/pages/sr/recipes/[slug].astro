@@ -1,0 +1,47 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import { getLangFromUrl, useTranslations } from '../../../i18n/utils';
+import { getRecipes, getRecipeBySlug } from '../../../lib/api';
+
+export async function getStaticPaths() {
+  const recipes = await getRecipes();
+  return recipes.map((r) => ({ params: { slug: r.slug } }));
+}
+
+const { slug } = Astro.params;
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+
+const recipe = await getRecipeBySlug(slug!);
+
+if (!recipe) {
+  return Astro.redirect('/404');
+}
+---
+
+<Layout title={`${recipe.title} — Šećerless`}>
+  <article class="max-w-3xl mx-auto px-4 py-16">
+    <h1 class="text-4xl font-bold mb-4">{recipe.title}</h1>
+    {recipe.description && <p class="opacity-70 mb-6">{recipe.description}</p>}
+    {recipe.imageUrl && (
+      <img
+        src={recipe.imageUrl}
+        alt={recipe.title}
+        class="rounded-2xl w-full h-80 object-cover mb-8"
+      />
+    )}
+
+    <button class="btn btn-outline btn-primary mb-8">{t('recipes.save')}</button>
+
+    <h2 class="text-2xl font-bold mb-3">{t('recipes.ingredients')}</h2>
+    <ul class="list-disc list-inside mb-8 opacity-80">
+      {recipe.ingredients.map((i) => <li>{i.text}</li>)}
+    </ul>
+
+    <h2 class="text-2xl font-bold mb-3">{t('recipes.steps')}</h2>
+    <ol class="list-decimal list-inside space-y-2 opacity-80">
+      {recipe.steps.map((s) => <li>{s.text}</li>)}
+    </ol>
+  </article>
+</Layout>
+

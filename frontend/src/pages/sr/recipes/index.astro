@@ -1,17 +1,13 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
 import { getLangFromUrl, useTranslations, useTranslatedPath } from '../../../i18n/utils';
+import { getRecipes } from '../../../lib/api';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const translatePath = useTranslatedPath(lang);
 
-// Placeholder data until Phase 4 connects this to GET /api/recipes
-const recipes = [
-  { slug: 'garlic-butter-pasta', title: 'Garlic Butter Pasta', image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=800', category: 'Dinner' },
-  { slug: 'grandmas-apple-pie', title: "Grandma's Apple Pie", image: 'https://images.unsplash.com/photo-1568571780765-9276ac8b75a2?w=800', category: 'Dessert' },
-  { slug: 'spicy-thai-curry', title: 'Spicy Thai Curry', image: 'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=800', category: 'Dinner' },
-];
+const recipes = await getRecipes();
 ---
 
 <Layout title="Recepti — Šećerless">
@@ -20,14 +16,17 @@ const recipes = [
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {recipes.map((r) => (
         <a href={translatePath(`/recipes/${r.slug}`)} class="card bg-base-100 shadow-md hover:shadow-xl transition-shadow">
-          <figure><img src={r.image} alt={r.title} class="h-44 w-full object-cover" /></figure>
+          <figure><img src={r.imageUrl ?? undefined} alt={r.title} class="h-44 w-full object-cover" /></figure>
           <div class="card-body">
-            <span class="badge badge-secondary badge-sm">{r.category}</span>
+            {r.category && <span class="badge badge-secondary badge-sm">{r.category.name}</span>}
             <h3 class="card-title">{r.title}</h3>
           </div>
         </a>
       ))}
     </div>
+    {recipes.length === 0 && (
+      <p class="text-center opacity-60">Još nema recepata — svratite uskoro!</p>
+    )}
   </section>
 </Layout>
 

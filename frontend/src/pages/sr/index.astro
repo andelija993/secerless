@@ -1,17 +1,15 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { getLangFromUrl, useTranslations, useTranslatedPath } from '../../i18n/utils';
+import { getRecipes } from '../../lib/api';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const translatePath = useTranslatedPath(lang);
 
-// Placeholder data — Phase 4 will replace this with a real API call to the Express backend.
-const topRecipes = [
-  { slug: 'garlic-butter-pasta', title: 'Garlic Butter Pasta', image: 'https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=800', excerpt: 'Creamy, garlicky weeknight comfort food.' },
-  { slug: 'grandmas-apple-pie', title: "Grandma's Apple Pie", image: 'https://images.unsplash.com/photo-1568571780765-9276ac8b75a2?w=800', excerpt: 'A family classic, baked to golden perfection.' },
-  { slug: 'spicy-thai-curry', title: 'Spicy Thai Curry', image: 'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=800', excerpt: 'Bold, fragrant, and ready in 30 minutes.' },
-];
+// Real data from the Express/Prisma API (Phase 4) — top 3 most recent recipes.
+const allRecipes = await getRecipes();
+const topRecipes = allRecipes.slice(0, 3);
 ---
 
 <Layout title="Šećerless — Recepti i priče o hrani">
@@ -34,14 +32,19 @@ const topRecipes = [
     <div class="grid md:grid-cols-3 gap-6">
       {topRecipes.map((r) => (
         <a href={translatePath(`/recipes/${r.slug}`)} class="card bg-base-100 shadow-md hover:shadow-xl transition-shadow">
-          <figure><img src={r.image} alt={r.title} class="h-48 w-full object-cover" /></figure>
+          <figure><img src={r.imageUrl ?? undefined} alt={r.title} class="h-48 w-full object-cover" /></figure>
           <div class="card-body">
             <h3 class="card-title">{r.title}</h3>
-            <p class="opacity-70">{r.excerpt}</p>
+            <p class="opacity-70">{r.description}</p>
           </div>
         </a>
       ))}
     </div>
+    {topRecipes.length === 0 && (
+      <p class="text-center opacity-60">
+        Još nema recepata — dodajte ih preko API-ja ili admin panela (Faza 5)!
+      </p>
+    )}
     <p class="text-center text-sm opacity-50 mt-6">
       {t('home.sliderNote')}
     </p>

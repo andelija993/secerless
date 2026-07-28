@@ -1,14 +1,19 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { getLangFromUrl, useTranslations, useTranslatedPath } from '../../i18n/utils';
+import { getPosts } from '../../lib/api';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
 const translatePath = useTranslatedPath(lang);
 
-const posts = [
-  { slug: 'why-i-started-cooking', title: 'Why I Started Cooking', excerpt: 'The story behind this whole project.' },
-];
+const posts = await getPosts();
+
+// Strip markdown syntax roughly for a plain-text excerpt preview.
+function excerpt(content: string, length = 140) {
+  const plain = content.replace(/[#*_`>\-]/g, '').trim();
+  return plain.length > length ? plain.slice(0, length) + '…' : plain;
+}
 ---
 
 <Layout title="Blog — Šećerless">
@@ -19,11 +24,14 @@ const posts = [
         <a href={translatePath(`/blog/${p.slug}`)} class="card bg-base-100 shadow-md hover:shadow-xl transition-shadow">
           <div class="card-body">
             <h3 class="card-title">{p.title}</h3>
-            <p class="opacity-70">{p.excerpt}</p>
+            <p class="opacity-70">{excerpt(p.content)}</p>
           </div>
         </a>
       ))}
     </div>
+    {posts.length === 0 && (
+      <p class="text-center opacity-60">No blog posts yet — check back soon!</p>
+    )}
   </section>
 </Layout>
 
