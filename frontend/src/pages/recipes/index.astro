@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import { getLangFromUrl, useTranslations, useTranslatedPath } from '../../i18n/utils';
 import { getRecipes } from '../../lib/api';
+import FavoriteButton from '../../components/FavoriteButton';
 
 const lang = getLangFromUrl(Astro.url);
 const t = useTranslations(lang);
@@ -15,13 +16,20 @@ const recipes = await getRecipes();
     <h1 class="text-4xl font-bold mb-8">{t('recipes.title')}</h1>
     <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {recipes.map((r) => (
-        <a href={translatePath(`/recipes/${r.slug}`)} class="card bg-base-100 shadow-md hover:shadow-xl transition-shadow">
-          <figure><img src={r.imageUrl ?? undefined} alt={r.title} class="h-44 w-full object-cover" /></figure>
+        <div class="card bg-base-100 shadow-md hover:shadow-xl transition-shadow">
+          <a href={translatePath(`/recipes/${r.slug}`)}>
+            <figure><img src={r.imageUrl ?? undefined} alt={r.title} class="h-44 w-full object-cover" /></figure>
+          </a>
           <div class="card-body">
-            {r.category && <span class="badge badge-secondary badge-sm">{r.category.name}</span>}
-            <h3 class="card-title">{r.title}</h3>
+            <a href={translatePath(`/recipes/${r.slug}`)} class="flex-1">
+              {r.category && <span class="badge badge-secondary badge-sm mb-1">{r.category.name}</span>}
+              <h3 class="card-title">{r.title}</h3>
+            </a>
+            <div class="card-actions justify-end mt-1">
+              <FavoriteButton recipeId={r.id} lang={lang} client:load />
+            </div>
           </div>
-        </a>
+        </div>
       ))}
     </div>
     {recipes.length === 0 && (

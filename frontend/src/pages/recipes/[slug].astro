@@ -2,9 +2,8 @@
 import Layout from '../../layouts/Layout.astro';
 import { getLangFromUrl, useTranslations } from '../../i18n/utils';
 import { getRecipes, getRecipeBySlug } from '../../lib/api';
+import FavoriteButton from '../../components/FavoriteButton';
 
-// Astro's default static build needs to know every possible /recipes/:slug
-// path ahead of time — getStaticPaths() runs at build time and lists them all.
 export async function getStaticPaths() {
   const recipes = await getRecipes();
   return recipes.map((r) => ({ params: { slug: r.slug } }));
@@ -33,7 +32,10 @@ if (!recipe) {
       />
     )}
 
-    <button class="btn btn-outline btn-primary mb-8">{t('recipes.save')}</button>
+    <div class="flex items-center gap-3 mb-8">
+      <FavoriteButton recipeId={recipe.id} lang={lang} client:load />
+      <span class="text-sm opacity-60">{t('recipes.save')}</span>
+    </div>
 
     <h2 class="text-2xl font-bold mb-3">{t('recipes.ingredients')}</h2>
     <ul class="list-disc list-inside mb-8 opacity-80">
