@@ -34,7 +34,7 @@ const navLinks = [
     </ul>
   </div>
 
-  <div class="navbar-end gap-2">
+  <div class="navbar-end flex items-center gap-2">
     <!-- Instagram icon (desktop) -->
     <a
       href={`https://instagram.com/${INSTAGRAM_HANDLE}`}
@@ -56,6 +56,11 @@ const navLinks = [
         {navLinks.map((link) => (
           <li><a href={link.href}>{link.label}</a></li>
         ))}
+        <li>
+          <a href={`https://instagram.com/${INSTAGRAM_HANDLE}`} target="_blank" rel="noopener noreferrer">
+            Instagram
+          </a>
+        </li>
       </ul>
     </div>
   </div>
