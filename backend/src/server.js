@@ -9,6 +9,7 @@ import categoryRoutes from './routes/categories.js';
 import contactRoutes from './routes/contact.js';
 import favoriteRoutes from './routes/favorites.js';
 import authRoutes from './routes/auth.js';
+import adminRoutes from './routes/admin.js';
 import { authenticate } from './middleware/auth.js';
 
 dotenv.config();
@@ -34,6 +35,7 @@ app.get('/api/health', (req, res) => {
 
 // --- Routes ---
 app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
 app.use('/api/recipes', recipeRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/categories', categoryRoutes);

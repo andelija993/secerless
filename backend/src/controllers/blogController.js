@@ -30,12 +30,18 @@ export async function getPostBySlug(req, res) {
   }
 }
 
-// POST /api/blog — create a post (admin-only, enforced later in Phase 3)
+// POST /api/blog — create a post (admin only)
 export async function createPost(req, res) {
   try {
-    const { title, slug, content, coverImageUrl, authorId } = req.body;
+    const { title, slug, content, coverImageUrl } = req.body;
     const post = await prisma.blogPost.create({
-      data: { title, slug, content, coverImageUrl, authorId },
+      data: {
+        title,
+        slug,
+        content,
+        coverImageUrl,
+        authorId: req.user.id, // always the logged-in admin
+      },
     });
     res.status(201).json(post);
   } catch (err) {
@@ -44,13 +50,19 @@ export async function createPost(req, res) {
   }
 }
 
-// PUT /api/blog/:id — update a post (admin-only, enforced later in Phase 3)
+// PUT /api/blog/:id — update a post (admin only)
 export async function updatePost(req, res) {
   try {
-    const { title, content, coverImageUrl, published } = req.body;
+    const { title, slug, content, coverImageUrl, published } = req.body;
     const post = await prisma.blogPost.update({
       where: { id: req.params.id },
-      data: { title, content, coverImageUrl, published },
+      data: {
+        ...(title !== undefined && { title }),
+        ...(slug !== undefined && { slug }),
+        ...(content !== undefined && { content }),
+        ...(coverImageUrl !== undefined && { coverImageUrl }),
+        ...(published !== undefined && { published }),
+      },
     });
     res.json(post);
   } catch (err) {

@@ -35,10 +35,10 @@ export async function getRecipeBySlug(req, res) {
   }
 }
 
-// POST /api/recipes — create a new recipe (admin-only, enforced later in Phase 3)
+// POST /api/recipes — create a new recipe (admin only)
 export async function createRecipe(req, res) {
   try {
-    const { title, slug, description, imageUrl, categoryId, authorId, ingredients = [], steps = [] } = req.body;
+    const { title, slug, description, imageUrl, categoryId, ingredients = [], steps = [] } = req.body;
 
     const recipe = await prisma.recipe.create({
       data: {
@@ -47,11 +47,15 @@ export async function createRecipe(req, res) {
         description,
         imageUrl,
         categoryId: categoryId || undefined,
-        authorId,
+        authorId: req.user.id, // always the logged-in admin — never trust the body
         ingredients: { create: ingredients.map((text, i) => ({ text, order: i })) },
         steps: { create: steps.map((text, i) => ({ text, order: i })) },
       },
-      include: { ingredients: true, steps: true },
+      include: {
+        category: true,
+        ingredients: { orderBy: { order: 'asc' } },
+        steps: { orderBy: { order: 'asc' } },
+      },
     });
     res.status(201).json(recipe);
   } catch (err) {
@@ -60,15 +64,55 @@ export async function createRecipe(req, res) {
   }
 }
 
-// PUT /api/recipes/:id — update a recipe (admin-only, enforced later in Phase 3)
+// PUT /api/recipes/:id — full update including ingredient/step replacement (admin only)
 export async function updateRecipe(req, res) {
   try {
-    const { title, description, imageUrl, categoryId, published } = req.body;
-    const recipe = await prisma.recipe.update({
-      where: { id: req.params.id },
-      data: { title, description, imageUrl, categoryId, published },
+    const { title, slug, description, imageUrl, categoryId, published, ingredients, steps } = req.body;
+    const id = req.params.id;
+
+    // Update the main recipe record (only fields that were sent)
+    await prisma.recipe.update({
+      where: { id },
+      data: {
+        ...(title !== undefined && { title }),
+        ...(slug !== undefined && { slug }),
+        ...(description !== undefined && { description }),
+        ...(imageUrl !== undefined && { imageUrl }),
+        ...(categoryId !== undefined && { categoryId: categoryId || null }),
+        ...(published !== undefined && { published }),
+      },
     });
-    res.json(recipe);
+
+    // Replace ingredients if provided — delete all, then re-insert in order
+    if (Array.isArray(ingredients)) {
+      await prisma.ingredient.deleteMany({ where: { recipeId: id } });
+      if (ingredients.length) {
+        await prisma.ingredient.createMany({
+          data: ingredients.map((text, i) => ({ text, order: i, recipeId: id })),
+        });
+      }
+    }
+
+    // Replace steps if provided
+    if (Array.isArray(steps)) {
+      await prisma.step.deleteMany({ where: { recipeId: id } });
+      if (steps.length) {
+        await prisma.step.createMany({
+          data: steps.map((text, i) => ({ text, order: i, recipeId: id })),
+        });
+      }
+    }
+
+    // Return the fully-populated recipe so the UI can update without a page reload
+    const updated = await prisma.recipe.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        ingredients: { orderBy: { order: 'asc' } },
+        steps: { orderBy: { order: 'asc' } },
+      },
+    });
+    res.json(updated);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to update recipe' });
