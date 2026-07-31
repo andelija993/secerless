@@ -6,6 +6,8 @@ import { useState } from 'react';
 import ImageUpload from './ImageUpload';
 
 function slugify(s: string) {
+  // ...existing code...
+
   return s
     .toLowerCase()
     .normalize('NFD') // decompose accented chars
@@ -45,12 +47,17 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
   const [steps, setSteps] = useState<string[]>(
     initial?.steps?.length ? initial.steps.map((s: any) => s.text) : ['']
   );
+  // Gallery: array of { url, caption }
+  const [galleryImages, setGalleryImages] = useState<{ url: string; caption: string }[]>(
+    initial?.images?.length
+      ? initial.images.map((img: any) => ({ url: img.url, caption: img.caption ?? '' }))
+      : []
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   function handleTitleChange(v: string) {
     setTitle(v);
-    // Auto-generate slug only while creating — don't overwrite an existing slug
     if (!initial) setSlug(slugify(v));
   }
 
@@ -68,6 +75,22 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
     setter(list.filter((_, i) => i !== index));
   }
 
+  function addGallerySlot() {
+    setGalleryImages((prev) => [...prev, { url: '', caption: '' }]);
+  }
+
+  function removeGallerySlot(index: number) {
+    setGalleryImages((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function updateGalleryUrl(index: number, url: string) {
+    setGalleryImages((prev) => prev.map((img, i) => (i === index ? { ...img, url } : img)));
+  }
+
+  function updateGalleryCaption(index: number, caption: string) {
+    setGalleryImages((prev) => prev.map((img, i) => (i === index ? { ...img, caption } : img)));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
@@ -81,6 +104,7 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
       published,
       ingredients: ingredients.filter(Boolean),
       steps: steps.filter(Boolean),
+      images: galleryImages.filter((img) => img.url),
     });
     setSaving(false);
     if (result && !result.ok) {
@@ -182,6 +206,41 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
         ))}
         <button type="button" className="btn btn-sm btn-outline btn-primary mt-1" onClick={() => addItem(steps, setSteps)}>
           + Add Step
+        </button>
+      </div>
+
+      {/* Gallery Images */}
+      <div>
+        <p className="label-text font-semibold mb-2">
+          Gallery Photos
+          <span className="opacity-50 font-normal ml-2 text-xs">(optional — shown as a slider below the cover)</span>
+        </p>
+        {galleryImages.map((img, i) => (
+          <div key={i} className="border border-base-300 rounded-xl p-3 mb-3 flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium opacity-60">Photo {i + 1}</span>
+              <button
+                type="button"
+                className="btn btn-xs btn-ghost text-error"
+                onClick={() => removeGallerySlot(i)}
+              >✕ Remove</button>
+            </div>
+            <ImageUpload value={img.url} onUpload={(url) => updateGalleryUrl(i, url)} />
+            <input
+              type="text"
+              className="input input-bordered input-sm"
+              placeholder="Caption (optional)"
+              value={img.caption}
+              onChange={(e) => updateGalleryCaption(i, e.target.value)}
+            />
+          </div>
+        ))}
+        <button
+          type="button"
+          className="btn btn-sm btn-outline btn-secondary"
+          onClick={addGallerySlot}
+        >
+          + Add Gallery Photo
         </button>
       </div>
 

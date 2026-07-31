@@ -15,7 +15,7 @@ export async function getAllRecipes(req, res) {
   }
 }
 
-// GET /api/recipes/:slug — one recipe with full ingredients/steps
+// GET /api/recipes/:slug — one recipe with full ingredients/steps/gallery
 export async function getRecipeBySlug(req, res) {
   try {
     const recipe = await prisma.recipe.findUnique({
@@ -24,6 +24,7 @@ export async function getRecipeBySlug(req, res) {
         category: true,
         ingredients: { orderBy: { order: 'asc' } },
         steps: { orderBy: { order: 'asc' } },
+        images: { orderBy: { order: 'asc' } },
         author: { select: { firstName: true, lastName: true } },
       },
     });
@@ -38,7 +39,7 @@ export async function getRecipeBySlug(req, res) {
 // POST /api/recipes — create a new recipe (admin only)
 export async function createRecipe(req, res) {
   try {
-    const { title, slug, description, imageUrl, categoryId, ingredients = [], steps = [] } = req.body;
+    const { title, slug, description, imageUrl, categoryId, ingredients = [], steps = [], images = [] } = req.body;
 
     const recipe = await prisma.recipe.create({
       data: {
@@ -47,14 +48,16 @@ export async function createRecipe(req, res) {
         description,
         imageUrl,
         categoryId: categoryId || undefined,
-        authorId: req.user.id, // always the logged-in admin — never trust the body
+        authorId: req.user.id,
         ingredients: { create: ingredients.map((text, i) => ({ text, order: i })) },
         steps: { create: steps.map((text, i) => ({ text, order: i })) },
+        images: { create: images.map((img, i) => ({ url: img.url, caption: img.caption || null, order: i })) },
       },
       include: {
         category: true,
         ingredients: { orderBy: { order: 'asc' } },
         steps: { orderBy: { order: 'asc' } },
+        images: { orderBy: { order: 'asc' } },
       },
     });
     res.status(201).json(recipe);
@@ -67,7 +70,7 @@ export async function createRecipe(req, res) {
 // PUT /api/recipes/:id — full update including ingredient/step replacement (admin only)
 export async function updateRecipe(req, res) {
   try {
-    const { title, slug, description, imageUrl, categoryId, published, ingredients, steps } = req.body;
+    const { title, slug, description, imageUrl, categoryId, published, ingredients, steps, images } = req.body;
     const id = req.params.id;
 
     // Update the main recipe record (only fields that were sent)
@@ -103,6 +106,16 @@ export async function updateRecipe(req, res) {
       }
     }
 
+    // Replace images if provided
+    if (Array.isArray(images)) {
+      await prisma.recipeImage.deleteMany({ where: { recipeId: id } });
+      if (images.length) {
+        await prisma.recipeImage.createMany({
+          data: images.map((img, i) => ({ url: img.url, caption: img.caption || null, order: i, recipeId: id })),
+        });
+      }
+    }
+
     // Return the fully-populated recipe so the UI can update without a page reload
     const updated = await prisma.recipe.findUnique({
       where: { id },
@@ -110,6 +123,7 @@ export async function updateRecipe(req, res) {
         category: true,
         ingredients: { orderBy: { order: 'asc' } },
         steps: { orderBy: { order: 'asc' } },
+        images: { orderBy: { order: 'asc' } },
       },
     });
     res.json(updated);

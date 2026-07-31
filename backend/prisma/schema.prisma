@@ -49,6 +49,7 @@ model Recipe {
 
   ingredients Ingredient[]
   steps       Step[]
+  images      RecipeImage[]
 
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id])
@@ -58,6 +59,16 @@ model Recipe {
 
   favorites Favorite[]
   comments  Comment[]
+}
+
+// Extra gallery photos for a recipe (optional, shown as a slider on the detail page)
+model RecipeImage {
+  id       String  @id @default(cuid())
+  url      String
+  caption  String?
+  order    Int     @default(0)
+  recipeId String
+  recipe   Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 }
 
 // Kept as separate rows (rather than one big text blob) so each

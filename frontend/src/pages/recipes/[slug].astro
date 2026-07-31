@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import { getLangFromUrl, useTranslations } from '../../i18n/utils';
 import { getRecipes, getRecipeBySlug } from '../../lib/api';
 import FavoriteButton from '../../components/FavoriteButton';
+import RecipeGallery from '../../components/RecipeGallery';
 
 export async function getStaticPaths() {
   const recipes = await getRecipes();
@@ -36,6 +37,10 @@ if (!recipe) {
       <FavoriteButton recipeId={recipe.id} lang={lang} client:load />
       <span class="text-sm opacity-60">{t('recipes.save')}</span>
     </div>
+
+    {recipe.images?.length > 0 && (
+      <RecipeGallery images={recipe.images} client:load />
+    )}
 
     <h2 class="text-2xl font-bold mb-3">{t('recipes.ingredients')}</h2>
     <ul class="list-disc list-inside mb-8 opacity-80">

@@ -10,6 +10,7 @@ export async function adminGetRecipes(req, res) {
         author: { select: { firstName: true, lastName: true } },
         ingredients: { orderBy: { order: 'asc' } },
         steps: { orderBy: { order: 'asc' } },
+        images: { orderBy: { order: 'asc' } },
       },
       orderBy: { createdAt: 'desc' },
     });
