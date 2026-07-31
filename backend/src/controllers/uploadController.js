@@ -1,13 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary';
 import multer from 'multer';
 
-// Configure Cloudinary from env vars
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
 // Keep files in RAM — no temp files on disk, upload directly to Cloudinary
 export const upload = multer({
   storage: multer.memoryStorage(),
@@ -21,6 +14,15 @@ export const upload = multer({
 // POST /api/upload  (requires admin)
 export async function uploadImage(req, res) {
   try {
+    // Configure here (not at module level) — in ESM all imports are evaluated
+    // before server.js runs dotenv.config(), so env vars would be empty at
+    // module load time. Reading them inside the handler is always safe.
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET,
+    });
+
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
@@ -31,7 +33,6 @@ export async function uploadImage(req, res) {
         {
           folder: 'secerless',
           resource_type: 'image',
-          // Auto-generate a public_id from the original filename (sanitised)
           public_id: `${Date.now()}-${req.file.originalname.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9._-]/g, '')}`,
           overwrite: false,
         },
