@@ -36,7 +36,7 @@ export default function ImageUpload({ value, onUpload }: Props) {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error ?? 'Upload failed');
+        setError(data.error ?? `Upload failed (${res.status})`);
       } else {
         onUpload(data.url);
       }
