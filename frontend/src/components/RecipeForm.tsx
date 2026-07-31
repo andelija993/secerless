@@ -3,6 +3,7 @@
 // `onSave` is called with the cleaned form data and returns { ok, error? }.
 
 import { useState } from 'react';
+import ImageUpload from './ImageUpload';
 
 function slugify(s: string) {
   return s
@@ -124,17 +125,8 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
         />
       </label>
 
-      {/* Image URL */}
-      <label className="form-control">
-        <span className="label-text font-semibold mb-1">Cover Image URL</span>
-        <input
-          type="url" className="input input-bordered" value={imageUrl} placeholder="https://..."
-          onChange={(e) => setImageUrl(e.target.value)}
-        />
-        {imageUrl && (
-          <img src={imageUrl} alt="preview" className="mt-2 h-32 w-full object-cover rounded-xl" />
-        )}
-      </label>
+      {/* Cover Image — uploads to Cloudinary */}
+      <ImageUpload value={imageUrl} onUpload={(url) => setImageUrl(url)} />
 
       {/* Category */}
       <label className="form-control">

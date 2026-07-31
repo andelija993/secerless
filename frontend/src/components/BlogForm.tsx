@@ -3,6 +3,7 @@
 // using the same tiny converter used by the public blog page (marked library).
 
 import { useState } from 'react';
+import ImageUpload from './ImageUpload';
 
 function slugify(s: string) {
   return s
@@ -100,17 +101,8 @@ export default function BlogForm({ initial, onSave, onCancel }: Props) {
         <span className="text-xs opacity-50 mt-1">Preview: /blog/{slug || '…'}</span>
       </label>
 
-      {/* Cover image */}
-      <label className="form-control">
-        <span className="label-text font-semibold mb-1">Cover Image URL</span>
-        <input
-          type="url" className="input input-bordered" value={coverImageUrl} placeholder="https://..."
-          onChange={(e) => setCoverImageUrl(e.target.value)}
-        />
-        {coverImageUrl && (
-          <img src={coverImageUrl} alt="preview" className="mt-2 h-32 w-full object-cover rounded-xl" />
-        )}
-      </label>
+      {/* Cover image — uploads to Cloudinary */}
+      <ImageUpload value={coverImageUrl} onUpload={(url) => setCoverImageUrl(url)} />
 
       {/* Content with preview toggle */}
       <div>

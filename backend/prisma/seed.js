@@ -25,16 +25,36 @@ async function main() {
     },
   });
 
-  // --- Categories ---
+  // --- Categories (canonical set) ---
+  await prisma.category.upsert({
+    where: { slug: 'breakfast' },
+    update: { name: 'Breakfast' },
+    create: { name: 'Breakfast', slug: 'breakfast' },
+  });
+  await prisma.category.upsert({
+    where: { slug: 'lunch' },
+    update: { name: 'Lunch' },
+    create: { name: 'Lunch', slug: 'lunch' },
+  });
   const dinner = await prisma.category.upsert({
     where: { slug: 'dinner' },
-    update: {},
+    update: { name: 'Dinner' },
     create: { name: 'Dinner', slug: 'dinner' },
+  });
+  await prisma.category.upsert({
+    where: { slug: 'drink' },
+    update: { name: 'Drink' },
+    create: { name: 'Drink', slug: 'drink' },
   });
   const dessert = await prisma.category.upsert({
     where: { slug: 'dessert' },
-    update: {},
+    update: { name: 'Dessert' },
     create: { name: 'Dessert', slug: 'dessert' },
+  });
+  await prisma.category.upsert({
+    where: { slug: 'ice-cream' },
+    update: { name: 'Ice Cream' },
+    create: { name: 'Ice Cream', slug: 'ice-cream' },
   });
 
   // --- Recipes (matching the placeholders already in the frontend) ---
