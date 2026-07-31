@@ -22,6 +22,7 @@ export interface RecipeSummary {
 export interface RecipeDetail extends RecipeSummary {
   ingredients: { id: string; text: string; order: number }[];
   steps: { id: string; text: string; order: number }[];
+  images: { id: string; url: string; caption: string | null; order: number }[];
   author: { firstName: string | null; lastName: string | null };
 }
 
