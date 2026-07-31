@@ -28,7 +28,7 @@ export default function RecipeGallery({ images }: Props) {
           key={current}
           src={images[current].url}
           alt={images[current].caption ?? `Photo ${current + 1}`}
-          className="w-full h-72 sm:h-96 object-cover transition-opacity duration-300"
+          className="w-full aspect-square object-cover transition-opacity duration-300"
         />
 
         {/* Gradient overlay so arrows are visible on bright photos */}
@@ -84,7 +84,7 @@ export default function RecipeGallery({ images }: Props) {
               }`}
               aria-label={`Go to photo ${i + 1}`}
             >
-              <img src={img.url} alt={`Thumbnail ${i + 1}`} className="h-14 w-20 object-cover" />
+              <img src={img.url} alt={`Thumbnail ${i + 1}`} className="h-16 w-16 object-cover" />
             </button>
           ))}
         </div>
