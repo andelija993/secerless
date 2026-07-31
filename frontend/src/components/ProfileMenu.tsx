@@ -1,24 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
+import { getMe, logout as apiLogout, type AuthUser } from '../lib/auth';
 
 interface Props {
   lang: Lang;
 }
 
-interface MockUser {
-  firstName: string;
-  lastName: string;
-  avatarUrl: string;
-  loggedIn: boolean;
-}
-
-const USER_KEY = 'secerless_user'; // placeholder localStorage key — replaced by real auth in Phase 3/7
 const THEME_KEY = 'secerless_theme';
 
-function getInitials(user: MockUser) {
+function getInitials(user: AuthUser) {
   const a = user.firstName?.[0] ?? '';
   const b = user.lastName?.[0] ?? '';
-  return (a + b).toUpperCase() || '?';
+  return (a + b).toUpperCase() || user.email[0].toUpperCase();
 }
 
 export default function ProfileMenu({ lang }: Props) {
@@ -26,14 +19,17 @@ export default function ProfileMenu({ lang }: Props) {
   const translatePath = useTranslatedPath(lang);
 
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState<MockUser | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
   const [theme, setTheme] = useState<'secerless' | 'secerless-dark'>('secerless');
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // Load mock user + theme from localStorage on mount (client-only)
+  // Ask the backend "who am I?" — the httpOnly JWT cookie (if any) is sent
+  // automatically by the browser, so we don't need to manage it ourselves.
   useEffect(() => {
-    const stored = localStorage.getItem(USER_KEY);
-    if (stored) setUser(JSON.parse(stored));
+    getMe()
+      .then(setUser)
+      .finally(() => setLoading(false));
 
     const storedTheme = localStorage.getItem(THEME_KEY) as 'secerless' | 'secerless-dark' | null;
     const initialTheme = storedTheme || document.documentElement.getAttribute('data-theme') || 'secerless';
@@ -66,13 +62,14 @@ export default function ProfileMenu({ lang }: Props) {
   }
 
   function handleLogout() {
-    localStorage.removeItem(USER_KEY);
-    setUser(null);
-    setOpen(false);
+    apiLogout().then(() => {
+      setUser(null);
+      setOpen(false);
+      window.location.href = translatePath('/');
+    });
   }
 
-  // --- Mock login helper for now, until Phase 3 wires real auth ---
-  // (Exposed so the Login page placeholder can call it — see login.astro note)
+  // --- Auth state now comes from the real Express/JWT backend (Phase 3) ---
 
   return (
     <div className="relative" ref={menuRef}>
@@ -80,10 +77,13 @@ export default function ProfileMenu({ lang }: Props) {
         onClick={() => setOpen((o) => !o)}
         className="btn btn-circle btn-ghost avatar placeholder"
         aria-label="Open profile menu"
+        disabled={loading}
       >
-        {user?.avatarUrl ? (
+        {loading ? (
+          <div className="bg-base-300 rounded-full w-10 animate-pulse" />
+        ) : user?.avatarUrl ? (
           <div className="w-10 rounded-full">
-            <img src={user.avatarUrl} alt={`${user.firstName} ${user.lastName}`} />
+            <img src={user.avatarUrl} alt={`${user.firstName ?? ''} ${user.lastName ?? ''}`} />
           </div>
         ) : (
           <div className="bg-primary text-primary-content rounded-full w-10 flex items-center justify-center font-semibold">
@@ -97,7 +97,7 @@ export default function ProfileMenu({ lang }: Props) {
           {/* Identity header */}
           <div className="px-2 py-1 mb-2">
             <p className="font-semibold">
-              {user ? `${user.firstName} ${user.lastName}` : t('profile.guest')}
+              {user ? (user.firstName || user.lastName ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : user.email) : t('profile.guest')}
             </p>
           </div>
 
@@ -112,6 +112,11 @@ export default function ProfileMenu({ lang }: Props) {
               <a href={translatePath('/favorites')} className="btn btn-ghost btn-sm justify-start w-full">
                 ❤️ {t('profile.favorites')}
               </a>
+              {user.role === 'ADMIN' && (
+                <a href={translatePath('/admin')} className="btn btn-ghost btn-sm justify-start w-full">
+                  🛠️ {t('profile.admin')}
+                </a>
+              )}
             </>
           ) : (
             <>

@@ -1,11 +1,11 @@
 import prisma from '../lib/prisma.js';
 
-// GET /api/favorites/:userId — a user's favorited recipes
-export async function getUserFavorites(req, res) {
+// GET /api/favorites — the logged-in user's favorited recipes
+export async function getMyFavorites(req, res) {
   try {
     const favorites = await prisma.favorite.findMany({
-      where: { userId: req.params.userId },
-      include: { recipe: true },
+      where: { userId: req.user.id },
+      include: { recipe: { include: { category: true } } },
     });
     res.json(favorites.map((f) => f.recipe));
   } catch (err) {
@@ -14,11 +14,13 @@ export async function getUserFavorites(req, res) {
   }
 }
 
-// POST /api/favorites — body: { userId, recipeId }
+// POST /api/favorites — body: { recipeId }
 export async function addFavorite(req, res) {
   try {
-    const { userId, recipeId } = req.body;
-    const favorite = await prisma.favorite.create({ data: { userId, recipeId } });
+    const { recipeId } = req.body;
+    const favorite = await prisma.favorite.create({
+      data: { userId: req.user.id, recipeId },
+    });
     res.status(201).json(favorite);
   } catch (err) {
     if (err.code === 'P2002') {
@@ -30,12 +32,12 @@ export async function addFavorite(req, res) {
   }
 }
 
-// DELETE /api/favorites — body: { userId, recipeId }
+// DELETE /api/favorites — body: { recipeId }
 export async function removeFavorite(req, res) {
   try {
-    const { userId, recipeId } = req.body;
+    const { recipeId } = req.body;
     await prisma.favorite.delete({
-      where: { userId_recipeId: { userId, recipeId } },
+      where: { userId_recipeId: { userId: req.user.id, recipeId } },
     });
     res.status(204).send();
   } catch (err) {

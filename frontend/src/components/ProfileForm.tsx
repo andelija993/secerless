@@ -1,35 +1,53 @@
 import { useEffect, useState } from 'react';
 import { useTranslations, type Lang } from '../i18n/utils';
+import { getMe, updateMe } from '../lib/auth';
 
 interface Props {
   lang: Lang;
 }
 
-interface MockUser {
+interface ProfileFields {
   firstName: string;
   lastName: string;
   avatarUrl: string;
 }
 
-const USER_KEY = 'secerless_user'; // placeholder — replaced by a real /api/users/me call in Phase 7
-
-const emptyUser: MockUser = { firstName: '', lastName: '', avatarUrl: '' };
+const emptyForm: ProfileFields = { firstName: '', lastName: '', avatarUrl: '' };
 
 export default function ProfileForm({ lang }: Props) {
   const t = useTranslations(lang);
-  const [form, setForm] = useState<MockUser>(emptyUser);
+  const [form, setForm] = useState<ProfileFields>(emptyForm);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem(USER_KEY);
-    if (stored) setForm(JSON.parse(stored));
+    getMe()
+      .then((user) => {
+        if (user) {
+          setForm({
+            firstName: user.firstName ?? '',
+            lastName: user.lastName ?? '',
+            avatarUrl: user.avatarUrl ?? '',
+          });
+        }
+      })
+      .finally(() => setLoading(false));
   }, []);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    localStorage.setItem(USER_KEY, JSON.stringify(form));
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    setSaving(true);
+    const { ok } = await updateMe(form);
+    setSaving(false);
+    if (ok) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
+  }
+
+  if (loading) {
+    return <p className="text-center opacity-60">…</p>;
   }
 
   return (
@@ -79,8 +97,8 @@ export default function ProfileForm({ lang }: Props) {
         />
       </label>
 
-      <button type="submit" className="btn btn-primary mt-2">
-        {saved ? `✅ ${t('profile.saved')}` : t('profile.save')}
+      <button type="submit" className="btn btn-primary mt-2" disabled={saving}>
+        {saved ? `✅ ${t('profile.saved')}` : saving ? '...' : t('profile.save')}
       </button>
     </form>
   );

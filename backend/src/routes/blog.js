@@ -6,14 +6,15 @@ import {
   updatePost,
   deletePost,
 } from '../controllers/blogController.js';
+import { requireAdmin } from '../middleware/auth.js';
 
 const router = Router();
 
 router.get('/', getAllPosts);
 router.get('/:slug', getPostBySlug);
-router.post('/', createPost);
-router.put('/:id', updatePost);
-router.delete('/:id', deletePost);
+router.post('/', requireAdmin, createPost);
+router.put('/:id', requireAdmin, updatePost);
+router.delete('/:id', requireAdmin, deletePost);
 
 export default router;
 

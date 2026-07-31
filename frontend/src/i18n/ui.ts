@@ -53,6 +53,8 @@ export const ui = {
     'login.email': 'Email',
     'login.password': 'Password',
     'login.submit': 'Log In',
+    'login.submitting': 'Logging in...',
+    'login.genericError': 'Something went wrong. Please try again.',
 
     'register.title': 'Create Account',
     'register.haveAccount': 'Already have an account?',
@@ -62,6 +64,8 @@ export const ui = {
     'register.email': 'Email',
     'register.password': 'Password',
     'register.submit': 'Sign Up',
+    'register.submitting': 'Creating account...',
+    'register.genericError': 'Something went wrong. Please try again.',
 
     'favorites.title': 'My Favorites',
     'favorites.empty': "Log in and start saving recipes — they'll show up here. (Phase 7 feature)",
@@ -77,6 +81,7 @@ export const ui = {
     'profile.signup': 'Sign Up',
     'profile.myProfile': 'My Profile',
     'profile.favorites': 'Favorites',
+    'profile.admin': 'Admin Dashboard',
     'profile.language': 'Language',
     'profile.theme': 'Theme',
     'profile.themeLight': 'Light',
@@ -133,6 +138,8 @@ export const ui = {
     'login.email': 'Email',
     'login.password': 'Lozinka',
     'login.submit': 'Prijavi se',
+    'login.submitting': 'Prijavljivanje...',
+    'login.genericError': 'Nešto nije u redu. Pokušajte ponovo.',
 
     'register.title': 'Napravi nalog',
     'register.haveAccount': 'Već imate nalog?',
@@ -142,6 +149,8 @@ export const ui = {
     'register.email': 'Email',
     'register.password': 'Lozinka',
     'register.submit': 'Registruj se',
+    'register.submitting': 'Kreiranje naloga...',
+    'register.genericError': 'Nešto nije u redu. Pokušajte ponovo.',
 
     'favorites.title': 'Moji omiljeni recepti',
     'favorites.empty': 'Prijavite se i počnite da čuvate recepte — pojaviće se ovde. (Funkcija u Fazi 7)',
@@ -157,6 +166,7 @@ export const ui = {
     'profile.signup': 'Registracija',
     'profile.myProfile': 'Moj profil',
     'profile.favorites': 'Omiljeno',
+    'profile.admin': 'Admin panel',
     'profile.language': 'Jezik',
     'profile.theme': 'Tema',
     'profile.themeLight': 'Svetla',

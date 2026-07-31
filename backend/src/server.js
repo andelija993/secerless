@@ -8,6 +8,8 @@ import blogRoutes from './routes/blog.js';
 import categoryRoutes from './routes/categories.js';
 import contactRoutes from './routes/contact.js';
 import favoriteRoutes from './routes/favorites.js';
+import authRoutes from './routes/auth.js';
+import { authenticate } from './middleware/auth.js';
 
 dotenv.config();
 
@@ -23,6 +25,7 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+app.use(authenticate); // attaches req.user (or null) on every request
 
 // --- Health check (useful to confirm the server is alive) ---
 app.get('/api/health', (req, res) => {
@@ -30,13 +33,13 @@ app.get('/api/health', (req, res) => {
 });
 
 // --- Routes ---
+app.use('/api/auth', authRoutes);
 app.use('/api/recipes', recipeRoutes);
 app.use('/api/blog', blogRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/favorites', favoriteRoutes);
-// import authRoutes from './routes/auth.js'; // wired up in Phase 3
-// app.use('/api/auth', authRoutes);
+
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
