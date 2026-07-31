@@ -14,9 +14,8 @@ export const upload = multer({
 // POST /api/upload  (requires admin)
 export async function uploadImage(req, res) {
   try {
-    // Configure here (not at module level) — in ESM all imports are evaluated
-    // before server.js runs dotenv.config(), so env vars would be empty at
-    // module load time. Reading them inside the handler is always safe.
+    // Configure inside the handler — in ESM all imports run before server.js
+    // calls dotenv.config(), so env vars are empty at module load time.
     cloudinary.config({
       cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
       api_key: process.env.CLOUDINARY_API_KEY,
