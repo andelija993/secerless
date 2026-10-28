@@ -1,4 +1,5 @@
 import prisma from '../lib/prisma.js';
+import { cached } from '../lib/cache.js';
 import { COOKIE_NAME, verifyToken } from '../utils/token.js';
 
 // Reads the JWT cookie (if present) and attaches the matching user to
@@ -13,7 +14,8 @@ export async function authenticate(req, res, next) {
     if (!token) return next();
 
     const payload = verifyToken(token);
-    const user = await prisma.user.findUnique({ where: { id: payload.sub } });
+    // Cached briefly so logged-in users don't pay a DB round trip on every request
+    const user = await cached(`user:${payload.sub}`, () => prisma.user.findUnique({ where: { id: payload.sub } }), 30_000);
     req.user = user || null;
   } catch (err) {
     // Expired or tampered token — just treat the request as logged-out

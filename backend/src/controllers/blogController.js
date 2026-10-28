@@ -1,13 +1,16 @@
 import prisma from '../lib/prisma.js';
+import { cached } from '../lib/cache.js';
 
 // GET /api/blog — list all published blog posts
 export async function getAllPosts(req, res) {
   try {
-    const posts = await prisma.blogPost.findMany({
-      where: { published: true },
-      include: { author: { select: { firstName: true, lastName: true } } },
-      orderBy: { publishedAt: 'desc' },
-    });
+    const posts = await cached('blog:all', () =>
+      prisma.blogPost.findMany({
+        where: { published: true },
+        include: { author: { select: { firstName: true, lastName: true } } },
+        orderBy: { publishedAt: 'desc' },
+      })
+    );
     res.json(posts);
   } catch (err) {
     console.error(err);
@@ -18,10 +21,13 @@ export async function getAllPosts(req, res) {
 // GET /api/blog/:slug — single post
 export async function getPostBySlug(req, res) {
   try {
-    const post = await prisma.blogPost.findUnique({
-      where: { slug: req.params.slug },
-      include: { author: { select: { firstName: true, lastName: true } } },
-    });
+    const slug = req.params.slug;
+    const post = await cached(`blog:slug:${slug}`, () =>
+      prisma.blogPost.findUnique({
+        where: { slug },
+        include: { author: { select: { firstName: true, lastName: true } } },
+      })
+    );
     if (!post) return res.status(404).json({ error: 'Post not found' });
     res.json(post);
   } catch (err) {

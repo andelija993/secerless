@@ -3,7 +3,7 @@
 import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
 import { getRecipes, getPosts } from '../lib/api';
 import TopRecipesSlider from './TopRecipesSlider';
-import { coverFraming, frameCss, DEFAULT_FRAMING } from '../lib/imageFrame';
+import { coverFraming, frameCss, DEFAULT_FRAMING, optimizeImage } from '../lib/imageFrame';
 
 interface Props {
   lang: Lang;
@@ -29,7 +29,7 @@ const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w
 const heroImages = [
   ...[...featured, ...recipes.filter((r) => !r.featured)]
     .filter((r) => r.imageUrl)
-    .map((r) => ({ url: r.imageUrl as string, style: frameCss(coverFraming(r)) })),
+    .map((r) => ({ url: optimizeImage(r.imageUrl as string, 900), style: frameCss(coverFraming(r)) })),
   ...Array(3).fill({ url: FALLBACK, style: frameCss(DEFAULT_FRAMING) }),
 ].slice(0, 3) as { url: string; style: string }[];
 
@@ -194,9 +194,10 @@ const fmtDate = (d: string) =>
         >
           <figure class="relative aspect-[4/3] overflow-hidden">
             <img
-              src={r.imageUrl ?? FALLBACK}
+              src={optimizeImage(r.imageUrl, 700) ?? FALLBACK}
               alt={r.title}
               loading="lazy"
+              decoding="async"
               class="h-full w-full object-cover transition-[scale] duration-700 group-hover:scale-110"
               style={frameCss(coverFraming(r))}
             />
@@ -235,7 +236,7 @@ const fmtDate = (d: string) =>
           style={`--reveal-delay: ${i * 100}ms`}
         >
           <img
-            src={p.coverImageUrl ?? FALLBACK}
+            src={optimizeImage(p.coverImageUrl, 1000) ?? FALLBACK}
             alt=""
             loading="lazy"
             class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"

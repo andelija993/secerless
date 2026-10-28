@@ -1,4 +1,5 @@
 import prisma from '../lib/prisma.js';
+import { cached } from '../lib/cache.js';
 
 const fullInclude = {
   category: true,
@@ -38,11 +39,13 @@ const coverFraming = ({ imagePosX, imagePosY, imageZoom }) => ({
 // GET /api/recipes — list all published recipes (with category + author name)
 export async function getAllRecipes(req, res) {
   try {
-    const recipes = await prisma.recipe.findMany({
-      where: { published: true },
-      include: { category: true, author: { select: { firstName: true, lastName: true } } },
-      orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
-    });
+    const recipes = await cached('recipes:all', () =>
+      prisma.recipe.findMany({
+        where: { published: true },
+        include: { category: true, author: { select: { firstName: true, lastName: true } } },
+        orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
+      })
+    );
     res.json(recipes);
   } catch (err) {
     console.error(err);
@@ -53,10 +56,13 @@ export async function getAllRecipes(req, res) {
 // GET /api/recipes/:slug — one recipe with full ingredients/steps/gallery
 export async function getRecipeBySlug(req, res) {
   try {
-    const recipe = await prisma.recipe.findUnique({
-      where: { slug: req.params.slug },
-      include: { ...fullInclude, author: { select: { firstName: true, lastName: true } } },
-    });
+    const slug = req.params.slug;
+    const recipe = await cached(`recipes:slug:${slug}`, () =>
+      prisma.recipe.findUnique({
+        where: { slug },
+        include: { ...fullInclude, author: { select: { firstName: true, lastName: true } } },
+      })
+    );
     if (!recipe) return res.status(404).json({ error: 'Recipe not found' });
     res.json(recipe);
   } catch (err) {

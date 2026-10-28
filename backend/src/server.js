@@ -12,6 +12,7 @@ import authRoutes from './routes/auth.js';
 import adminRoutes from './routes/admin.js';
 import uploadRoutes from './routes/upload.js';
 import { authenticate } from './middleware/auth.js';
+import { clearCache } from './lib/cache.js';
 
 dotenv.config();
 
@@ -28,6 +29,18 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 app.use(authenticate); // attaches req.user (or null) on every request
+
+// Any successful write to content (admin edits, profile updates…) clears the
+// in-memory read cache so changes appear immediately.
+const CONTENT_WRITE = /^\/api\/(recipes|blog|categories|admin|auth)\b/;
+app.use((req, res, next) => {
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && CONTENT_WRITE.test(req.path)) {
+    res.on('finish', () => {
+      if (res.statusCode < 400) clearCache();
+    });
+  }
+  next();
+});
 
 // --- Health check (useful to confirm the server is alive) ---
 app.get('/api/health', (req, res) => {

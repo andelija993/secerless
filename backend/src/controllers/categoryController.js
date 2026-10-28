@@ -1,9 +1,12 @@
 import prisma from '../lib/prisma.js';
+import { cached } from '../lib/cache.js';
 
 // GET /api/categories — used for recipe filtering dropdowns
 export async function getAllCategories(req, res) {
   try {
-    const categories = await prisma.category.findMany({ orderBy: { name: 'asc' } });
+    const categories = await cached('categories:all', () =>
+      prisma.category.findMany({ orderBy: { name: 'asc' } })
+    );
     res.json(categories);
   } catch (err) {
     console.error(err);

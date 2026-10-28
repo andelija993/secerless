@@ -3,7 +3,7 @@
 // dots, keyboard and swipe support. Each photo keeps its admin framing.
 
 import { useRef, useState } from 'react';
-import { frameStyle, type Framing } from '../lib/imageFrame';
+import { frameStyle, optimizeImage, type Framing } from '../lib/imageFrame';
 
 interface Slide {
   url: string;
@@ -44,8 +44,9 @@ export default function RecipeHeroSlider({ slides }: Props) {
       {slides.map((s, i) => (
         <img
           key={s.url + i}
-          src={s.url}
+          src={optimizeImage(s.url, 1100)}
           alt={s.alt}
+          decoding="async"
           loading={i === 0 ? 'eager' : 'lazy'}
           className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ${
             i === current ? 'opacity-100' : 'opacity-0'

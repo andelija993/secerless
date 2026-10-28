@@ -5,7 +5,7 @@ import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
 import type { RecipeDetail } from '../lib/api';
 import FavoriteButton from './FavoriteButton';
 import RecipeHeroSlider from './RecipeHeroSlider';
-import { coverFraming, galleryFraming } from '../lib/imageFrame';
+import { coverFraming, galleryFraming, optimizeImage } from '../lib/imageFrame';
 
 interface Props {
   recipe: RecipeDetail;
@@ -130,7 +130,7 @@ const slides = [
         </div>
         <video
           src={recipe.videoUrl}
-          poster={recipe.imageUrl ?? undefined}
+          poster={optimizeImage(recipe.imageUrl, 700) ?? undefined}
           controls
           playsinline
           preload="none"

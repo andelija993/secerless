@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import type { AuthUser } from '../lib/auth';
 import { getMe } from '../lib/auth';
 import { getFavorites, removeFavorite } from '../lib/favorites';
-import { coverFraming, frameStyle } from '../lib/imageFrame';
+import { coverFraming, frameStyle, optimizeImage } from '../lib/imageFrame';
 
 interface Props {
   lang: string;
@@ -93,7 +93,7 @@ export default function FavoritesGrid({ lang }: Props) {
           <a href={`${recipeBase}/${r.slug}`}>
             <figure>
               <img
-                src={r.imageUrl ?? '/favicon.svg'}
+                src={optimizeImage(r.imageUrl, 700) ?? '/favicon.svg'}
                 alt={r.title}
                 className="h-44 w-full object-cover"
                 style={frameStyle(coverFraming(r))}

@@ -3,8 +3,7 @@
 // Redirects to /login if the user is not logged in.
 
 import { useState, useEffect } from 'react';
-import { getMe } from '../lib/auth';
-import { checkFavorite, addFavorite, removeFavorite } from '../lib/favorites';
+import { getFavoriteIds, addFavorite, removeFavorite } from '../lib/favorites';
 import { showToast } from '../lib/toast';
 
 interface Props {
@@ -18,11 +17,10 @@ export default function FavoriteButton({ recipeId, lang = 'en' }: Props) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getMe().then((user) => {
-      setLoggedIn(!!user);
-      if (user) {
-        checkFavorite(recipeId).then(setFavorited);
-      }
+    // One shared request per page (null = guest)
+    getFavoriteIds().then((ids) => {
+      setLoggedIn(!!ids);
+      setFavorited(!!ids?.has(recipeId));
     });
   }, [recipeId]);
 

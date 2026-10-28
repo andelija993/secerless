@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { coverFraming, frameStyle } from '../lib/imageFrame';
+import { coverFraming, frameStyle, optimizeImage } from '../lib/imageFrame';
 
 interface Recipe {
   slug: string;
@@ -64,8 +64,9 @@ export default function TopRecipesSlider({ recipes, basePath }: Props) {
             tabIndex={index === current ? 0 : -1}
           >
             <img
-              src={recipe.imageUrl ?? '/logo.png'}
+              src={optimizeImage(recipe.imageUrl, 1400) ?? '/logo.png'}
               alt={recipe.title}
+              decoding="async"
               style={frameStyle(coverFraming(recipe))}
               className={`h-full w-full object-cover transition-[scale] duration-[6000ms] ease-out ${
                 index === current ? 'scale-105' : 'scale-100'
@@ -140,7 +141,7 @@ export default function TopRecipesSlider({ recipes, basePath }: Props) {
                 index === current ? 'ring-white scale-105' : 'ring-transparent opacity-60 hover:opacity-100'
               }`}
             >
-              <img src={r.imageUrl ?? '/logo.png'} alt="" className="h-full w-full object-cover" style={frameStyle(coverFraming(r))} />
+              <img src={optimizeImage(r.imageUrl, 160) ?? '/logo.png'} alt="" className="h-full w-full object-cover" style={frameStyle(coverFraming(r))} />
             </button>
           ))}
         </div>

@@ -3,7 +3,7 @@
 import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
 import { getRecipes } from '../lib/api';
 import FavoriteButton from './FavoriteButton';
-import { coverFraming, frameCss } from '../lib/imageFrame';
+import { coverFraming, frameCss, optimizeImage } from '../lib/imageFrame';
 
 interface Props {
   lang: Lang;
@@ -50,9 +50,10 @@ const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w
         <a href={translatePath(`/recipes/${r.slug}`)} class="block">
           <figure class="relative aspect-[4/3] overflow-hidden">
             <img
-              src={r.imageUrl ?? FALLBACK}
+              src={optimizeImage(r.imageUrl, 700) ?? FALLBACK}
               alt={r.title}
               loading="lazy"
+              decoding="async"
               class="h-full w-full object-cover transition-[scale] duration-700 group-hover:scale-110"
               style={frameCss(coverFraming(r))}
             />

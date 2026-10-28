@@ -4,6 +4,7 @@
 import { marked } from 'marked';
 import { getPosts, type BlogPostSummary } from '../lib/api';
 import { useTranslatedPath, type Lang } from '../i18n/utils';
+import { optimizeImage } from '../lib/imageFrame';
 
 interface Props {
   post: BlogPostSummary;
@@ -50,7 +51,7 @@ const formattedDate = new Date(post.publishedAt).toLocaleDateString(isSr ? 'sr-L
 const words = content.split(/\s+/).filter(Boolean).length;
 const readingMinutes = Math.max(1, Math.round(words / 200));
 
-const cover = post.coverImageUrl ?? 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1600';
+const cover = optimizeImage(post.coverImageUrl, 1800) ?? 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1600';
 
 // "More stories" — up to 3 other posts
 const allPosts = await getPosts();
@@ -136,7 +137,7 @@ const txt = isSr
           >
             <figure class="overflow-hidden">
               <img
-                src={p.coverImageUrl ?? 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800'}
+                src={optimizeImage(p.coverImageUrl, 700) ?? 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800'}
                 alt={localTitle(p)}
                 class="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"

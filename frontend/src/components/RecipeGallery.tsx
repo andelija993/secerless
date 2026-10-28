@@ -2,7 +2,7 @@
 // Rendered as a client:load React island on the recipe detail page.
 
 import { useState } from 'react';
-import { frameStyle, galleryFraming } from '../lib/imageFrame';
+import { frameStyle, galleryFraming, optimizeImage } from '../lib/imageFrame';
 
 interface GalleryImage {
   url: string;
@@ -30,7 +30,7 @@ export default function RecipeGallery({ images }: Props) {
       <div className="relative rounded-2xl overflow-hidden group">
         <img
           key={current}
-          src={images[current].url}
+          src={optimizeImage(images[current].url, 1100)}
           alt={images[current].caption ?? `Photo ${current + 1}`}
           className="w-full aspect-square object-cover transition-opacity duration-300"
           style={frameStyle(galleryFraming(images[current]))}
@@ -89,7 +89,7 @@ export default function RecipeGallery({ images }: Props) {
               }`}
               aria-label={`Go to photo ${i + 1}`}
             >
-              <img src={img.url} alt={`Thumbnail ${i + 1}`} className="h-16 w-16 object-cover" style={frameStyle(galleryFraming(img))} />
+              <img src={optimizeImage(img.url, 160)} loading="lazy" alt={`Thumbnail ${i + 1}`} className="h-16 w-16 object-cover" style={frameStyle(galleryFraming(img))} />
             </button>
           ))}
         </div>

@@ -38,6 +38,18 @@ export function frameStyle(f: Framing): Record<string, string> {
   };
 }
 
+/**
+ * Ask Cloudinary for a resized, auto-compressed version (WebP/AVIF when the
+ * browser supports it). Originals are ~700 KB; this brings them to ~50–150 KB.
+ * Non-Cloudinary URLs are returned unchanged.
+ */
+export function optimizeImage<T extends string | null | undefined>(url: T, width = 800): T {
+  if (!url || !url.includes('res.cloudinary.com') || !url.includes('/upload/')) return url;
+  // Skip if a transformation is already present right after /upload/
+  if (/\/upload\/(?:[a-z]{1,3}_[^/]+,?)+\//.test(url)) return url;
+  return url.replace('/upload/', `/upload/f_auto,q_auto,c_limit,w_${width}/`) as T;
+}
+
 /** Same thing as an inline style string for .astro templates. */
 export function frameCss(f: Framing): string {
   const s = frameStyle(f);
