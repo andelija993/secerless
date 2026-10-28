@@ -85,6 +85,15 @@ const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w
   </div>
 
   {recipes.length === 0 && <p class="text-center opacity-60 py-16">{t('recipes.empty')}</p>}
+
+  <!-- Pagination (filled in by the script below) -->
+  <nav
+    id="recipe-pagination"
+    class="mt-14 flex flex-wrap items-center justify-center gap-2"
+    aria-label="Pagination"
+    data-prev={lang === 'sr' ? '← Prethodna' : '← Previous'}
+    data-next={lang === 'sr' ? 'Sledeća →' : 'Next →'}
+  ></nav>
 </section>
 
 <style>
@@ -101,6 +110,32 @@ const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w
   .filter-chip:hover {
     border-color: color-mix(in oklch, var(--color-primary) 50%, transparent);
   }
+  :global(.page-btn) {
+    min-width: 2.75rem;
+    height: 2.75rem;
+    padding: 0 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid var(--color-base-300);
+    background: var(--color-base-100);
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  :global(.page-btn:hover:not(:disabled)) {
+    border-color: color-mix(in oklch, var(--color-primary) 50%, transparent);
+    color: var(--color-primary);
+  }
+  :global(.page-btn.is-active) {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-primary-content);
+    box-shadow: 0 8px 20px -8px color-mix(in oklch, var(--color-primary) 60%, transparent);
+  }
+  :global(.page-btn:disabled) {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
   .filter-chip.is-active {
     background: var(--color-primary);
     border-color: var(--color-primary);
@@ -110,26 +145,87 @@ const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w
 </style>
 
 <script>
+  const PER_PAGE = 6;
   const chips = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
-  const cards = document.querySelectorAll<HTMLElement>('.recipe-card');
+  const cards = [...document.querySelectorAll<HTMLElement>('.recipe-card')];
+  const nav = document.getElementById('recipe-pagination')!;
+  const grid = cards[0]?.parentElement;
 
-  function apply(filter: string) {
-    chips.forEach((c) => c.classList.toggle('is-active', c.dataset.filter === filter));
-    cards.forEach((card) => {
-      const show = filter === 'all' || card.dataset.category === filter;
-      card.style.display = show ? '' : 'none';
-      if (show) card.classList.add('is-visible');
-    });
+  let filter = 'all';
+  let page = 1;
+
+  function syncUrl() {
     const url = new URL(window.location.href);
     if (filter === 'all') url.searchParams.delete('category');
     else url.searchParams.set('category', filter);
+    if (page === 1) url.searchParams.delete('page');
+    else url.searchParams.set('page', String(page));
     history.replaceState(null, '', url);
   }
 
-  chips.forEach((chip) => chip.addEventListener('click', () => apply(chip.dataset.filter!)));
+  function pageButton(label: string, target: number, opts: { active?: boolean; disabled?: boolean } = {}) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'page-btn' + (opts.active ? ' is-active' : '');
+    b.textContent = label;
+    b.disabled = !!opts.disabled;
+    if (opts.active) b.setAttribute('aria-current', 'page');
+    b.addEventListener('click', () => {
+      page = target;
+      render();
+      grid?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return b;
+  }
 
-  // Support links like /recipes?category=dessert (used by the homepage category tiles)
-  const initial = new URLSearchParams(window.location.search).get('category');
-  if (initial && [...chips].some((c) => c.dataset.filter === initial)) apply(initial);
+  function render() {
+    chips.forEach((c) => c.classList.toggle('is-active', c.dataset.filter === filter));
+
+    const matching = cards.filter((c) => filter === 'all' || c.dataset.category === filter);
+    const pages = Math.max(1, Math.ceil(matching.length / PER_PAGE));
+    page = Math.min(Math.max(1, page), pages);
+    const from = (page - 1) * PER_PAGE;
+    const visible = new Set(matching.slice(from, from + PER_PAGE));
+
+    cards.forEach((card) => {
+      const show = visible.has(card);
+      card.style.display = show ? '' : 'none';
+      if (show) card.classList.add('is-visible');
+    });
+
+    // Pagination buttons
+    nav.replaceChildren();
+    if (pages > 1) {
+      nav.append(pageButton(nav.dataset.prev!, page - 1, { disabled: page === 1 }));
+      for (let i = 1; i <= pages; i++) {
+        // compact: first, last, current ±1, with … gaps
+        if (i === 1 || i === pages || Math.abs(i - page) <= 1) {
+          nav.append(pageButton(String(i), i, { active: i === page }));
+        } else if (Math.abs(i - page) === 2) {
+          const dots = document.createElement('span');
+          dots.className = 'px-1 opacity-50';
+          dots.textContent = '…';
+          nav.append(dots);
+        }
+      }
+      nav.append(pageButton(nav.dataset.next!, page + 1, { disabled: page === pages }));
+    }
+    syncUrl();
+  }
+
+  chips.forEach((chip) =>
+    chip.addEventListener('click', () => {
+      filter = chip.dataset.filter!;
+      page = 1;
+      render();
+    })
+  );
+
+  // Support links like /recipes?category=dessert&page=2
+  const params = new URLSearchParams(window.location.search);
+  const initialCat = params.get('category');
+  if (initialCat && [...chips].some((c) => c.dataset.filter === initialCat)) filter = initialCat;
+  page = Number(params.get('page')) || 1;
+  render();
 </script>
 
