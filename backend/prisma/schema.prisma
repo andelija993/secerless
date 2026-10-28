@@ -38,11 +38,18 @@ model Category {
 }
 
 model Recipe {
-  id          String   @id @default(cuid())
-  title       String
-  slug        String   @unique
-  description String?
-  imageUrl    String?
+  id            String   @id @default(cuid())
+  title         String
+  titleSr       String?
+  slug          String   @unique
+  description   String?
+  descriptionSr String?
+  imageUrl      String?
+  imagePosX     Int      @default(50) // cover framing: horizontal focus 0–100 %
+  imagePosY     Int      @default(50) // cover framing: vertical focus 0–100 %
+  imageZoom     Float    @default(1)  // cover framing: 1 = fit, up to 3
+  videoUrl      String? // optional recipe video (e.g. imported Instagram reel)
+  instagramId   String?  @unique // source post/reel — makes the Instagram import re-runnable
   published   Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -67,6 +74,9 @@ model RecipeImage {
   url      String
   caption  String?
   order    Int     @default(0)
+  posX     Int     @default(50)
+  posY     Int     @default(50)
+  zoom     Float   @default(1)
   recipeId String
   recipe   Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 }
@@ -74,16 +84,18 @@ model RecipeImage {
 // Kept as separate rows (rather than one big text blob) so each
 // ingredient/step can be edited, reordered, or queried individually.
 model Ingredient {
-  id       String @id @default(cuid())
+  id       String  @id @default(cuid())
   text     String
+  textSr   String?
   order    Int    @default(0)
   recipeId String
   recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 }
 
 model Step {
-  id       String @id @default(cuid())
+  id       String  @id @default(cuid())
   text     String
+  textSr   String?
   order    Int    @default(0)
   recipeId String
   recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)

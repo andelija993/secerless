@@ -1,5 +1,40 @@
 import prisma from '../lib/prisma.js';
 
+const fullInclude = {
+  category: true,
+  ingredients: { orderBy: { order: 'asc' } },
+  steps: { orderBy: { order: 'asc' } },
+  images: { orderBy: { order: 'asc' } },
+};
+
+// Ingredients/steps may be sent as plain strings (English only)
+// or as { text, textSr } objects for bilingual content.
+const toLine = (item, i) =>
+  typeof item === 'string'
+    ? { text: item, textSr: null, order: i }
+    : { text: item?.text ?? '', textSr: item?.textSr || null, order: i };
+
+const emptyToNull = (v) => (v === '' ? null : v);
+
+// Image framing: focus point 0–100 % and zoom 1–3
+const clamp = (v, min, max, fallback) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
+};
+const toImage = (img, i) => ({
+  url: img.url,
+  caption: img.caption || null,
+  order: i,
+  posX: Math.round(clamp(img.posX, 0, 100, 50)),
+  posY: Math.round(clamp(img.posY, 0, 100, 50)),
+  zoom: clamp(img.zoom, 1, 3, 1),
+});
+const coverFraming = ({ imagePosX, imagePosY, imageZoom }) => ({
+  ...(imagePosX !== undefined && { imagePosX: Math.round(clamp(imagePosX, 0, 100, 50)) }),
+  ...(imagePosY !== undefined && { imagePosY: Math.round(clamp(imagePosY, 0, 100, 50)) }),
+  ...(imageZoom !== undefined && { imageZoom: clamp(imageZoom, 1, 3, 1) }),
+});
+
 // GET /api/recipes — list all published recipes (with category + author name)
 export async function getAllRecipes(req, res) {
   try {
@@ -20,13 +55,7 @@ export async function getRecipeBySlug(req, res) {
   try {
     const recipe = await prisma.recipe.findUnique({
       where: { slug: req.params.slug },
-      include: {
-        category: true,
-        ingredients: { orderBy: { order: 'asc' } },
-        steps: { orderBy: { order: 'asc' } },
-        images: { orderBy: { order: 'asc' } },
-        author: { select: { firstName: true, lastName: true } },
-      },
+      include: { ...fullInclude, author: { select: { firstName: true, lastName: true } } },
     });
     if (!recipe) return res.status(404).json({ error: 'Recipe not found' });
     res.json(recipe);
@@ -39,26 +68,29 @@ export async function getRecipeBySlug(req, res) {
 // POST /api/recipes — create a new recipe (admin only)
 export async function createRecipe(req, res) {
   try {
-    const { title, slug, description, imageUrl, categoryId, ingredients = [], steps = [], images = [] } = req.body;
+    const {
+      title, titleSr, slug, description, descriptionSr, imageUrl, videoUrl, categoryId, published,
+      ingredients = [], steps = [], images = [],
+    } = req.body;
 
     const recipe = await prisma.recipe.create({
       data: {
         title,
+        titleSr: emptyToNull(titleSr),
         slug,
         description,
+        descriptionSr: emptyToNull(descriptionSr),
         imageUrl,
+        videoUrl: emptyToNull(videoUrl),
+        ...coverFraming(req.body),
+        ...(published !== undefined && { published }),
         categoryId: categoryId || undefined,
         authorId: req.user.id,
-        ingredients: { create: ingredients.map((text, i) => ({ text, order: i })) },
-        steps: { create: steps.map((text, i) => ({ text, order: i })) },
-        images: { create: images.map((img, i) => ({ url: img.url, caption: img.caption || null, order: i })) },
+        ingredients: { create: ingredients.map(toLine) },
+        steps: { create: steps.map(toLine) },
+        images: { create: images.map(toImage) },
       },
-      include: {
-        category: true,
-        ingredients: { orderBy: { order: 'asc' } },
-        steps: { orderBy: { order: 'asc' } },
-        images: { orderBy: { order: 'asc' } },
-      },
+      include: fullInclude,
     });
     res.status(201).json(recipe);
   } catch (err) {
@@ -70,7 +102,10 @@ export async function createRecipe(req, res) {
 // PUT /api/recipes/:id — full update including ingredient/step replacement (admin only)
 export async function updateRecipe(req, res) {
   try {
-    const { title, slug, description, imageUrl, categoryId, published, ingredients, steps, images } = req.body;
+    const {
+      title, titleSr, slug, description, descriptionSr, imageUrl, videoUrl, categoryId, published,
+      ingredients, steps, images,
+    } = req.body;
     const id = req.params.id;
 
     // Update the main recipe record (only fields that were sent)
@@ -78,9 +113,13 @@ export async function updateRecipe(req, res) {
       where: { id },
       data: {
         ...(title !== undefined && { title }),
+        ...(titleSr !== undefined && { titleSr: emptyToNull(titleSr) }),
         ...(slug !== undefined && { slug }),
         ...(description !== undefined && { description }),
+        ...(descriptionSr !== undefined && { descriptionSr: emptyToNull(descriptionSr) }),
         ...(imageUrl !== undefined && { imageUrl }),
+        ...(videoUrl !== undefined && { videoUrl: emptyToNull(videoUrl) }),
+        ...coverFraming(req.body),
         ...(categoryId !== undefined && { categoryId: categoryId || null }),
         ...(published !== undefined && { published }),
       },
@@ -91,7 +130,7 @@ export async function updateRecipe(req, res) {
       await prisma.ingredient.deleteMany({ where: { recipeId: id } });
       if (ingredients.length) {
         await prisma.ingredient.createMany({
-          data: ingredients.map((text, i) => ({ text, order: i, recipeId: id })),
+          data: ingredients.map((item, i) => ({ ...toLine(item, i), recipeId: id })),
         });
       }
     }
@@ -101,7 +140,7 @@ export async function updateRecipe(req, res) {
       await prisma.step.deleteMany({ where: { recipeId: id } });
       if (steps.length) {
         await prisma.step.createMany({
-          data: steps.map((text, i) => ({ text, order: i, recipeId: id })),
+          data: steps.map((item, i) => ({ ...toLine(item, i), recipeId: id })),
         });
       }
     }
@@ -111,21 +150,13 @@ export async function updateRecipe(req, res) {
       await prisma.recipeImage.deleteMany({ where: { recipeId: id } });
       if (images.length) {
         await prisma.recipeImage.createMany({
-          data: images.map((img, i) => ({ url: img.url, caption: img.caption || null, order: i, recipeId: id })),
+          data: images.map((img, i) => ({ ...toImage(img, i), recipeId: id })),
         });
       }
     }
 
     // Return the fully-populated recipe so the UI can update without a page reload
-    const updated = await prisma.recipe.findUnique({
-      where: { id },
-      include: {
-        category: true,
-        ingredients: { orderBy: { order: 'asc' } },
-        steps: { orderBy: { order: 'asc' } },
-        images: { orderBy: { order: 'asc' } },
-      },
-    });
+    const updated = await prisma.recipe.findUnique({ where: { id }, include: fullInclude });
     res.json(updated);
   } catch (err) {
     console.error(err);
@@ -133,7 +164,7 @@ export async function updateRecipe(req, res) {
   }
 }
 
-// DELETE /api/recipes/:id — remove a recipe (admin-only, enforced later in Phase 3)
+// DELETE /api/recipes/:id — remove a recipe (admin only)
 export async function deleteRecipe(req, res) {
   try {
     await prisma.recipe.delete({ where: { id: req.params.id } });

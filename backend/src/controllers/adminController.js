@@ -35,3 +35,30 @@ export async function adminGetPosts(req, res) {
   }
 }
 
+
+// Shared bulk handler: { ids: string[], action: 'publish' | 'unpublish' | 'delete' }
+function bulkAction(model, label) {
+  return async (req, res) => {
+    try {
+      const { ids, action } = req.body ?? {};
+      if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ error: 'No items selected' });
+      const where = { id: { in: ids.map(String) } };
+      let result;
+      if (action === 'publish' || action === 'unpublish') {
+        result = await prisma[model].updateMany({ where, data: { published: action === 'publish' } });
+      } else if (action === 'delete') {
+        result = await prisma[model].deleteMany({ where });
+      } else {
+        return res.status(400).json({ error: 'Unknown action' });
+      }
+      res.json({ count: result.count, action });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: `Bulk action on ${label} failed` });
+    }
+  };
+}
+
+// POST /api/admin/recipes/bulk and /api/admin/posts/bulk
+export const adminBulkRecipes = bulkAction('recipe', 'recipes');
+export const adminBulkPosts = bulkAction('blogPost', 'posts');
