@@ -1,0 +1,128 @@
+---
+// RecipesIndexView — shared /recipes and /sr/recipes listing with category filter chips.
+import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
+import { getRecipes } from '../lib/api';
+import FavoriteButton from './FavoriteButton';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const translatePath = useTranslatedPath(lang);
+
+const recipes = await getRecipes();
+
+const categories = [
+  ...new Map(recipes.filter((r) => r.category).map((r) => [r.category!.slug, r.category!])).values(),
+];
+
+const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=900';
+---
+
+<section class="relative -mt-[4.5rem] pt-[4.5rem] bg-blobs">
+  <div class="max-w-6xl mx-auto px-4 pt-14 pb-10 text-center reveal">
+    <p class="text-xs font-semibold uppercase tracking-[0.25em] text-primary">Šećerless</p>
+    <h1 class="mt-3 text-5xl md:text-6xl font-semibold">{t('recipes.title')}</h1>
+    <p class="mx-auto mt-4 max-w-2xl text-lg opacity-70">{t('recipes.subtitle')}</p>
+
+    {categories.length > 0 && (
+      <div class="mt-8 flex flex-wrap justify-center gap-2" role="group" aria-label="Filter">
+        <button type="button" data-filter="all" class="filter-chip is-active">{t('recipes.all')}</button>
+        {categories.map((c) => (
+          <button type="button" data-filter={c.slug} class="filter-chip">{c.name}</button>
+        ))}
+      </div>
+    )}
+  </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-4 pb-8">
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-7">
+    {recipes.map((r, i) => (
+      <article
+        class="recipe-card reveal group relative overflow-hidden rounded-[2rem] bg-base-100 border border-base-300 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300"
+        data-category={r.category?.slug ?? ''}
+        style={`--reveal-delay: ${(i % 3) * 80}ms`}
+      >
+        <a href={translatePath(`/recipes/${r.slug}`)} class="block">
+          <figure class="relative aspect-[4/3] overflow-hidden">
+            <img
+              src={r.imageUrl ?? FALLBACK}
+              alt={r.title}
+              loading="lazy"
+              class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            {r.category && (
+              <span class="absolute left-4 top-4 rounded-full glass-surface px-3 py-1 text-xs font-semibold">
+                {r.category.name}
+              </span>
+            )}
+          </figure>
+          <div class="p-6">
+            <h3 class="text-xl font-semibold leading-snug group-hover:text-primary transition-colors">{r.title}</h3>
+            {r.description && <p class="mt-2 text-sm opacity-65 line-clamp-2">{r.description}</p>}
+            <span class="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary">
+              {t('recipes.view')}
+              <span class="transition-transform group-hover:translate-x-1">→</span>
+            </span>
+          </div>
+        </a>
+        <div class="absolute right-4 top-4 rounded-full glass-surface">
+          <FavoriteButton recipeId={r.id} lang={lang} client:visible />
+        </div>
+      </article>
+    ))}
+  </div>
+
+  {recipes.length === 0 && <p class="text-center opacity-60 py-16">{t('recipes.empty')}</p>}
+</section>
+
+<style>
+  .filter-chip {
+    border-radius: 9999px;
+    padding: 0.55rem 1.15rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid var(--color-base-300);
+    background: var(--color-base-100);
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+  .filter-chip:hover {
+    border-color: color-mix(in oklch, var(--color-primary) 50%, transparent);
+  }
+  .filter-chip.is-active {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-primary-content);
+    box-shadow: 0 8px 20px -8px color-mix(in oklch, var(--color-primary) 60%, transparent);
+  }
+</style>
+
+<script>
+  const chips = document.querySelectorAll<HTMLButtonElement>('[data-filter]');
+  const cards = document.querySelectorAll<HTMLElement>('.recipe-card');
+
+  function apply(filter: string) {
+    chips.forEach((c) => c.classList.toggle('is-active', c.dataset.filter === filter));
+    cards.forEach((card) => {
+      const show = filter === 'all' || card.dataset.category === filter;
+      card.style.display = show ? '' : 'none';
+      if (show) card.classList.add('is-visible');
+    });
+    const url = new URL(window.location.href);
+    if (filter === 'all') url.searchParams.delete('category');
+    else url.searchParams.set('category', filter);
+    history.replaceState(null, '', url);
+  }
+
+  chips.forEach((chip) => chip.addEventListener('click', () => apply(chip.dataset.filter!)));
+
+  // Support links like /recipes?category=dessert (used by the homepage category tiles)
+  const initial = new URLSearchParams(window.location.search).get('category');
+  if (initial && [...chips].some((c) => c.dataset.filter === initial)) apply(initial);
+</script>
+

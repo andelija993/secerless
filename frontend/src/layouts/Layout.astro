@@ -38,17 +38,40 @@ const lang = getLangFromUrl(Astro.url);
       })();
     </script>
   </head>
-  <body class="min-h-screen flex flex-col bg-base-100 text-base-content">
+  <body class="min-h-screen flex flex-col bg-base-100 text-base-content font-sans">
     <NavBar />
     <main class="flex-1">
       <slot />
     </main>
     <Footer />
 
+    <!-- Scroll-reveal: adds .is-visible to every .reveal element when it enters the viewport -->
+    <script is:inline>
+      (() => {
+        const els = document.querySelectorAll('.reveal');
+        if (!('IntersectionObserver' in window)) {
+          els.forEach((el) => el.classList.add('is-visible'));
+          return;
+        }
+        const io = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                io.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+        );
+        els.forEach((el) => io.observe(el));
+      })();
+    </script>
+
     <!-- Fixed, top-most layer so toasts are visible even above open modals (DaisyUI modal z-index is 999) -->
     <div
       id="global-toast-root"
-      style="position: fixed; top: 1rem; right: 1rem; z-index: 2147483647; display: flex; flex-direction: column; gap: 0.5rem; pointer-events: none; max-width: calc(100vw - 2rem);"
+      style="position: fixed; top: 5.5rem; right: 1rem; z-index: 2147483647; display: flex; flex-direction: column; gap: 0.5rem; pointer-events: none; max-width: calc(100vw - 2rem);"
     ></div>
 
     <script is:inline>

@@ -1,45 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { getLangFromUrl, useTranslations, useTranslatedPath } from '../../i18n/utils';
-import { getRecipes } from '../../lib/api';
-import TopRecipesSlider from '../../components/TopRecipesSlider';
-
-const lang = getLangFromUrl(Astro.url);
-const t = useTranslations(lang);
-const translatePath = useTranslatedPath(lang);
-
-const allRecipes = await getRecipes();
-const topRecipes = allRecipes.slice(0, 3);
+import HomePage from '../../components/HomePage.astro';
 ---
-
 <Layout title="Šećerless — Recepti i priče o hrani">
-  <!-- Hero -->
-  <section class="hero min-h-[60vh] bg-gradient-to-br from-primary/10 to-secondary/10">
-    <div class="hero-content text-center">
-      <div class="max-w-2xl">
-        <h1 class="text-5xl font-bold mb-4">{t('home.title')}</h1>
-        <p class="py-4 text-lg opacity-80">
-          {t('home.subtitle')}
-        </p>
-        <a href={translatePath('/recipes')} class="btn btn-primary btn-lg">{t('home.cta')}</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Top recipes slider (will become a React island carousel in Phase 8) -->
-  <section class="max-w-6xl mx-auto px-4 py-16">
-    <h2 class="text-3xl font-bold mb-8 text-center">{t('home.topRecipes')}</h2>
-
-    {topRecipes.length > 0 ? (
-      <TopRecipesSlider recipes={topRecipes} basePath={translatePath('/recipes')} client:load />
-    ) : (
-      <p class="text-center opacity-60">
-        Još nema recepata — dodajte ih preko admin panela.
-      </p>
-    )}
-
-    <p class="text-center text-sm opacity-50 mt-6">
-      {t('home.sliderNote')}
-    </p>
-  </section>
+  <HomePage lang="sr" />
 </Layout>

@@ -1,0 +1,116 @@
+---
+// RecipeDetailView — shared recipe page for EN and SR.
+import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
+import type { RecipeDetail } from '../lib/api';
+import FavoriteButton from './FavoriteButton';
+import RecipeGallery from './RecipeGallery';
+
+interface Props {
+  recipe: RecipeDetail;
+  lang: Lang;
+}
+
+const { recipe, lang } = Astro.props;
+const t = useTranslations(lang);
+const translatePath = useTranslatedPath(lang);
+const isSr = lang === 'sr';
+
+const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1200';
+const authorName = [recipe.author?.firstName, recipe.author?.lastName].filter(Boolean).join(' ');
+const txt = isSr
+  ? { back: '← Svi recepti', items: 'sastojaka', steps: 'koraka', tick: 'Štikliraj sastojke dok kuvaš', by: 'Autor', gallery: 'Galerija' }
+  : { back: '← All recipes', items: 'ingredients', steps: 'steps', tick: 'Tick ingredients off as you cook', by: 'By', gallery: 'Gallery' };
+---
+
+<article>
+  <!-- Hero -->
+  <section class="relative -mt-[4.5rem] pt-[4.5rem] bg-blobs">
+    <div class="max-w-6xl mx-auto px-4 pt-10 pb-14 grid gap-10 lg:grid-cols-2 items-center">
+      <div class="reveal order-2 lg:order-1">
+        <a href={translatePath('/recipes')} class="text-sm font-medium opacity-70 hover:opacity-100 hover:text-primary transition">
+          {txt.back}
+        </a>
+        {recipe.category && (
+          <span class="mt-6 block w-fit rounded-full bg-primary/10 text-primary px-3 py-1 text-xs font-semibold uppercase tracking-wider">
+            {recipe.category.name}
+          </span>
+        )}
+        <h1 class="mt-4 text-4xl md:text-6xl font-semibold leading-[1.05]">{recipe.title}</h1>
+        {recipe.description && <p class="mt-5 text-lg leading-relaxed opacity-75">{recipe.description}</p>}
+
+        <div class="mt-8 flex flex-wrap items-center gap-3">
+          <div class="flex items-center gap-2 rounded-full border border-base-300 bg-base-100 pl-1 pr-4 py-1">
+            <FavoriteButton recipeId={recipe.id} lang={lang} client:load />
+            <span class="text-sm font-medium">{t('recipes.save').replace('❤️ ', '')}</span>
+          </div>
+          <span class="rounded-full border border-base-300 bg-base-100 px-4 py-2 text-sm">
+            🧺 {recipe.ingredients.length} {txt.items}
+          </span>
+          <span class="rounded-full border border-base-300 bg-base-100 px-4 py-2 text-sm">
+            👩‍🍳 {recipe.steps.length} {txt.steps}
+          </span>
+        </div>
+        {authorName && <p class="mt-6 text-sm opacity-60">{txt.by} {authorName}</p>}
+      </div>
+
+      <div class="reveal order-1 lg:order-2" style="--reveal-delay: 120ms">
+        <div class="relative">
+          <div class="absolute -inset-3 rounded-[2.75rem] bg-gradient-to-br from-primary/30 via-secondary/30 to-accent/30 blur-2xl"></div>
+          <img
+            src={recipe.imageUrl ?? FALLBACK}
+            alt={recipe.title}
+            class="relative aspect-square w-full rounded-[2.5rem] object-cover shadow-2xl"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gallery -->
+  {recipe.images?.length > 0 && (
+    <section class="max-w-4xl mx-auto px-4 pb-14 reveal">
+      <h2 class="text-2xl font-semibold mb-5">{txt.gallery}</h2>
+      <RecipeGallery images={recipe.images} client:visible />
+    </section>
+  )}
+
+  <!-- Ingredients + steps -->
+  <section class="max-w-6xl mx-auto px-4 grid gap-10 lg:grid-cols-[0.85fr_1.15fr] items-start">
+    <aside class="reveal lg:sticky lg:top-28 rounded-[2rem] bg-base-200 p-7 md:p-8">
+      <h2 class="text-2xl font-semibold">{t('recipes.ingredients')}</h2>
+      <p class="mt-1 text-xs opacity-60">{txt.tick}</p>
+      <ul class="mt-5 space-y-1">
+        {recipe.ingredients.map((i) => (
+          <li>
+            <label class="ingredient flex cursor-pointer items-start gap-3 rounded-xl px-2 py-2 hover:bg-base-100 transition-colors">
+              <input type="checkbox" class="checkbox checkbox-primary checkbox-sm mt-0.5" />
+              <span>{i.text}</span>
+            </label>
+          </li>
+        ))}
+      </ul>
+    </aside>
+
+    <div class="reveal" style="--reveal-delay: 100ms">
+      <h2 class="text-2xl font-semibold mb-6">{t('recipes.steps')}</h2>
+      <ol class="space-y-5">
+        {recipe.steps.map((s, idx) => (
+          <li class="flex gap-5 rounded-[1.5rem] border border-base-300 bg-base-100 p-5 md:p-6 hover:border-primary/40 transition-colors">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-content font-display text-lg font-semibold shadow-md shadow-primary/30">
+              {idx + 1}
+            </span>
+            <p class="pt-2 leading-relaxed opacity-90">{s.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+</article>
+
+<style>
+  .ingredient:has(input:checked) span {
+    text-decoration: line-through;
+    opacity: 0.45;
+  }
+</style>
+

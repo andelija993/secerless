@@ -1,54 +1,177 @@
+/* Self-hosted variable fonts (include latin-ext → š, ć, č, ž, đ) */
+@import "@fontsource-variable/fraunces";
+@import "@fontsource-variable/plus-jakarta-sans";
 @import "tailwindcss";
+
 @plugin "daisyui" {
   themes: false;
 }
+
+/* ------------------------------------------------------------------
+   LIGHT — "Berry & Cream"
+   Warm cream base, juicy raspberry primary (a brighter cousin of the
+   logo's burgundy), apricot secondary and pistachio accent.
+------------------------------------------------------------------- */
 @plugin "daisyui/theme" {
   name: "secerless";
   default: true;
   color-scheme: light;
-  /* Cream / off-white background, matching the logo's inner circle */
-  --color-base-100: oklch(97% 0.015 75);
-  --color-base-200: oklch(93% 0.02 75);
-  --color-base-300: oklch(88% 0.025 75);
-  --color-base-content: oklch(22% 0.03 20);
-  /* Deep burgundy/wine red — the logo's signature color */
-  --color-primary: oklch(38% 0.13 20);
-  --color-primary-content: oklch(97% 0.015 75);
-  /* Softer rose/berry tone for secondary accents (cherries on the cake) */
-  --color-secondary: oklch(55% 0.16 15);
-  --color-secondary-content: oklch(97% 0.015 75);
-  /* Warm cream/gold accent */
-  --color-accent: oklch(85% 0.06 85);
-  --color-accent-content: oklch(25% 0.03 20);
-  --color-neutral: oklch(25% 0.03 20);
-  --color-neutral-content: oklch(97% 0.015 75);
-  --radius-box: 1rem;
-  --radius-field: 0.5rem;
-  --radius-selector: 1rem;
+  --color-base-100: oklch(98.6% 0.008 80);
+  --color-base-200: oklch(95.8% 0.016 75);
+  --color-base-300: oklch(91.5% 0.024 70);
+  --color-base-content: oklch(25% 0.035 20);
+  --color-primary: oklch(54% 0.2 8);
+  --color-primary-content: oklch(98.5% 0.01 80);
+  --color-secondary: oklch(73% 0.15 50);
+  --color-secondary-content: oklch(24% 0.04 40);
+  --color-accent: oklch(80% 0.11 145);
+  --color-accent-content: oklch(24% 0.04 150);
+  --color-neutral: oklch(27% 0.04 15);
+  --color-neutral-content: oklch(97% 0.01 80);
+  --color-info: oklch(68% 0.12 230);
+  --color-info-content: oklch(98% 0.01 230);
+  --color-success: oklch(66% 0.14 155);
+  --color-success-content: oklch(98% 0.01 155);
+  --color-warning: oklch(80% 0.15 80);
+  --color-warning-content: oklch(25% 0.05 70);
+  --color-error: oklch(58% 0.21 25);
+  --color-error-content: oklch(98% 0.01 25);
+  --radius-box: 1.5rem;
+  --radius-field: 0.875rem;
+  --radius-selector: 2rem;
+  --depth: 1;
+  --noise: 0;
 }
 
+/* ------------------------------------------------------------------
+   DARK — "Cocoa Night"
+   Soft warm charcoal instead of deep red-brown, off-white text (no
+   harsh pure white) and lighter, pastel versions of the brand colors
+   so everything stays readable without glare.
+------------------------------------------------------------------- */
 @plugin "daisyui/theme" {
   name: "secerless-dark";
   default: false;
   prefersdark: true;
   color-scheme: dark;
-  --color-base-100: oklch(20% 0.025 20);
-  --color-base-200: oklch(16% 0.025 20);
-  --color-base-300: oklch(12% 0.025 20);
-  --color-base-content: oklch(93% 0.015 75);
-  --color-primary: oklch(55% 0.15 20);
-  --color-primary-content: oklch(97% 0.015 75);
-  --color-secondary: oklch(62% 0.16 15);
-  --color-secondary-content: oklch(97% 0.015 75);
-  --color-accent: oklch(75% 0.07 85);
-  --color-accent-content: oklch(18% 0.03 20);
-  --color-neutral: oklch(90% 0.015 75);
-  --color-neutral-content: oklch(18% 0.03 20);
-  --radius-box: 1rem;
-  --radius-field: 0.5rem;
-  --radius-selector: 1rem;
+  --color-base-100: oklch(22% 0.012 45);
+  --color-base-200: oklch(19.5% 0.011 45);
+  --color-base-300: oklch(27% 0.014 45);
+  --color-base-content: oklch(90% 0.012 75);
+  --color-primary: oklch(74% 0.14 10);
+  --color-primary-content: oklch(20% 0.04 10);
+  --color-secondary: oklch(80% 0.12 55);
+  --color-secondary-content: oklch(22% 0.04 50);
+  --color-accent: oklch(83% 0.1 145);
+  --color-accent-content: oklch(22% 0.04 150);
+  --color-neutral: oklch(32% 0.015 45);
+  --color-neutral-content: oklch(92% 0.01 75);
+  --color-info: oklch(76% 0.1 230);
+  --color-info-content: oklch(20% 0.03 230);
+  --color-success: oklch(76% 0.12 155);
+  --color-success-content: oklch(20% 0.03 155);
+  --color-warning: oklch(84% 0.13 80);
+  --color-warning-content: oklch(22% 0.04 70);
+  --color-error: oklch(70% 0.17 25);
+  --color-error-content: oklch(20% 0.04 25);
+  --radius-box: 1.5rem;
+  --radius-field: 0.875rem;
+  --radius-selector: 2rem;
+  --depth: 0;
+  --noise: 0;
 }
 
+/* ---------------- Typography ---------------- */
+@theme {
+  --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces Variable", Georgia, "Times New Roman", serif;
+}
 
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3,
+  .font-display {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    letter-spacing: -0.02em;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--color-primary) 25%, transparent);
+  }
+  /* Smooth colour change when switching light/dark */
+  body,
+  .card,
+  footer {
+    transition: background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease;
+  }
+}
 
+/* ---------------- Reusable utilities ---------------- */
+
+/* Gradient text for highlighted headline words */
+@utility text-gradient {
+  background-image: linear-gradient(100deg, var(--color-primary), var(--color-secondary));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Frosted glass surface (navbar, floating badges) */
+@utility glass-surface {
+  background: color-mix(in oklch, var(--color-base-100) 72%, transparent);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid color-mix(in oklch, var(--color-base-content) 9%, transparent);
+}
+
+/* Soft decorative colour blobs behind hero sections */
+@utility bg-blobs {
+  background-image:
+    radial-gradient(40rem 28rem at 10% 0%, color-mix(in oklch, var(--color-primary) 16%, transparent), transparent 70%),
+    radial-gradient(34rem 24rem at 95% 20%, color-mix(in oklch, var(--color-secondary) 20%, transparent), transparent 70%),
+    radial-gradient(30rem 22rem at 50% 110%, color-mix(in oklch, var(--color-accent) 18%, transparent), transparent 70%);
+}
+
+/* ---------------- Motion ---------------- */
+
+/* Native cross-page transitions (Chrome/Edge/Safari 18+, ignored elsewhere) */
+@view-transition {
+  navigation: auto;
+}
+
+/* Fade/slide-in on scroll — toggled by a tiny IntersectionObserver in Layout */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+.animate-float {
+  animation: float-y 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .animate-float {
+    animation: none;
+  }
+}
 

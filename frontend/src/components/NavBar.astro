@@ -16,53 +16,115 @@ const navLinks = [
   { href: translatePath('/about'), label: t('nav.about') },
   { href: translatePath('/contact'), label: t('nav.contact') },
 ];
+
+// Highlight the current section (home only matches exactly)
+const current = Astro.url.pathname.replace(/\/$/, '') || '/';
+function isActive(href: string) {
+  const h = href.replace(/\/$/, '') || '/';
+  if (h === '/' || h === '/sr') return current === h;
+  return current === h || current.startsWith(`${h}/`);
+}
 ---
 
-<div class="navbar bg-base-100 shadow-sm px-4 sm:px-8 sticky top-0 z-50">
-  <div class="navbar-start">
-    <a href={translatePath('/')} class="btn btn-ghost text-xl font-bold gap-2 px-2">
-      <img src="/logo.png" alt="Šećerless" class="h-9 w-9 rounded-full object-cover" />
-      Šećerless
+<header class="sticky top-0 z-50 px-3 sm:px-6 pt-3">
+  <nav class="glass-surface mx-auto max-w-6xl rounded-full shadow-lg shadow-black/5 flex items-center justify-between gap-2 pl-2 pr-2 sm:pr-3 py-1.5">
+    <a href={translatePath('/')} class="flex items-center gap-2 rounded-full pl-1 pr-3 py-1 hover:bg-base-200/70 transition-colors">
+      <img src="/logo.png" alt="" class="h-9 w-9 rounded-full object-cover ring-2 ring-primary/20" />
+      <span class="font-display text-xl font-semibold tracking-tight">Šećerless</span>
     </a>
-  </div>
 
-  <div class="navbar-center hidden lg:flex">
-    <ul class="menu menu-horizontal px-1 gap-1">
+    <ul class="hidden lg:flex items-center gap-1 text-sm font-medium">
       {navLinks.map((link) => (
-        <li><a href={link.href}>{link.label}</a></li>
-      ))}
-    </ul>
-  </div>
-
-  <div class="navbar-end flex items-center gap-2">
-    <!-- Instagram icon (desktop) -->
-    <a
-      href={`https://instagram.com/${INSTAGRAM_HANDLE}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      class="btn btn-ghost btn-circle hidden lg:flex"
-      aria-label="Instagram"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-      </svg>
-    </a>
-
-    <ProfileMenu client:load lang={lang} />
-
-    <div class="dropdown dropdown-end lg:hidden">
-      <div tabindex="0" role="button" class="btn btn-ghost btn-circle">☰</div>
-      <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-10 mt-3 w-52 p-2 shadow">
-        {navLinks.map((link) => (
-          <li><a href={link.href}>{link.label}</a></li>
-        ))}
         <li>
-          <a href={`https://instagram.com/${INSTAGRAM_HANDLE}`} target="_blank" rel="noopener noreferrer">
-            Instagram
+          <a
+            href={link.href}
+            class:list={[
+              'rounded-full px-4 py-2 transition-colors',
+              isActive(link.href)
+                ? 'bg-primary text-primary-content shadow-sm'
+                : 'hover:bg-base-200/80 opacity-80 hover:opacity-100',
+            ]}
+            aria-current={isActive(link.href) ? 'page' : undefined}
+          >
+            {link.label}
           </a>
         </li>
-      </ul>
+      ))}
+    </ul>
+
+    <div class="flex items-center gap-1">
+      <!-- Quick theme toggle -->
+      <button
+        type="button"
+        id="theme-toggle"
+        class="btn btn-ghost btn-circle btn-sm sm:btn-md"
+        aria-label="Toggle dark mode"
+      >
+        <svg class="theme-icon-sun h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41"/></svg>
+        <svg class="theme-icon-moon h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
+
+      <!-- Instagram icon (desktop) -->
+      <a
+        href={`https://instagram.com/${INSTAGRAM_HANDLE}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="btn btn-ghost btn-circle hidden lg:flex"
+        aria-label="Instagram"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+        </svg>
+      </a>
+
+      <ProfileMenu client:load lang={lang} />
+
+      <div class="dropdown dropdown-end lg:hidden">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-circle" aria-label="Menu">
+          <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </div>
+        <ul tabindex="0" class="menu dropdown-content glass-surface rounded-box z-10 mt-4 w-56 p-2 shadow-xl">
+          {navLinks.map((link) => (
+            <li>
+              <a href={link.href} class:list={[isActive(link.href) && 'menu-active']}>{link.label}</a>
+            </li>
+          ))}
+          <li>
+            <a href={`https://instagram.com/${INSTAGRAM_HANDLE}`} target="_blank" rel="noopener noreferrer">
+              Instagram ↗
+            </a>
+          </li>
+        </ul>
+      </div>
     </div>
-  </div>
-</div>
+  </nav>
+</header>
+
+<style>
+  /* Show the icon for the theme you'll switch TO */
+  :global([data-theme='secerless-dark']) .theme-icon-moon,
+  :global(html:not([data-theme='secerless-dark'])) .theme-icon-sun {
+    display: none;
+  }
+</style>
+
+<script is:inline>
+  (() => {
+    const KEY = 'secerless_theme';
+    const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      const root = document.documentElement;
+      const next = root.getAttribute('data-theme') === 'secerless-dark' ? 'secerless' : 'secerless-dark';
+      const apply = () => {
+        root.setAttribute('data-theme', next);
+        localStorage.setItem(KEY, next);
+        window.dispatchEvent(new CustomEvent('secerless:theme', { detail: next }));
+      };
+      // Smooth cross-fade when the browser supports it
+      if (document.startViewTransition) document.startViewTransition(apply);
+      else apply();
+    });
+  })();
+</script>
 

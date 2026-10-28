@@ -1,0 +1,104 @@
+---
+// BlogIndexView — shared /blog and /sr/blog listing: one featured story + card grid.
+import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
+import { getPosts, type BlogPostSummary } from '../lib/api';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const translatePath = useTranslatedPath(lang);
+const isSr = lang === 'sr';
+
+const posts = await getPosts();
+const [featured, ...rest] = posts;
+
+const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1200';
+
+const title = (p: BlogPostSummary) => (isSr ? p.titleSr?.trim() || p.title : p.title);
+const body = (p: BlogPostSummary) => (isSr ? p.contentSr?.trim() || p.content : p.content);
+const excerpt = (p: BlogPostSummary, length = 150) => {
+  const plain = body(p)
+    .replace(/^\s*#\s+.+\n+/, '')
+    .replace(/[#*_`>-]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return plain.length > length ? `${plain.slice(0, length).trim()}…` : plain;
+};
+const minutes = (p: BlogPostSummary) => Math.max(1, Math.round(body(p).split(/\s+/).length / 200));
+const date = (p: BlogPostSummary) =>
+  new Date(p.publishedAt).toLocaleDateString(isSr ? 'sr-Latn-RS' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+const txt = isSr
+  ? { eyebrow: 'Dnevnik', sub: 'Priče, kuhinjske beleške i promišljeno pisanje o hrani — sa mog stola za vaš.', read: 'min čitanja', more: 'Pročitaj →', empty: 'Još nema objava — svratite uskoro!' }
+  : { eyebrow: 'Journal', sub: 'Stories, kitchen notes and thoughtful food writing — from my table to yours.', read: 'min read', more: 'Read story →', empty: 'No blog posts yet — check back soon!' };
+---
+
+<section class="relative -mt-[4.5rem] pt-[4.5rem] bg-blobs">
+  <div class="max-w-6xl mx-auto px-4 pt-14 pb-12 text-center reveal">
+    <p class="text-xs font-semibold uppercase tracking-[0.25em] text-primary">{txt.eyebrow}</p>
+    <h1 class="mt-3 text-5xl md:text-6xl font-semibold">{t('blog.title')}</h1>
+    <p class="mx-auto mt-4 max-w-2xl text-lg opacity-70">{txt.sub}</p>
+  </div>
+</section>
+
+<section class="max-w-6xl mx-auto px-4">
+  {featured && (
+    <a
+      href={translatePath(`/blog/${featured.slug}`)}
+      class="reveal group grid overflow-hidden rounded-[2.5rem] border border-base-300 bg-base-100 shadow-lg hover:shadow-2xl transition-shadow lg:grid-cols-2"
+    >
+      <figure class="relative min-h-72 overflow-hidden">
+        <img
+          src={featured.coverImageUrl ?? FALLBACK}
+          alt=""
+          class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+      </figure>
+      <div class="flex flex-col justify-center p-8 md:p-12">
+        <p class="text-xs font-semibold uppercase tracking-widest text-primary">
+          {date(featured)} · {minutes(featured)} {txt.read}
+        </p>
+        <h2 class="mt-4 text-3xl md:text-4xl font-semibold leading-tight group-hover:text-primary transition-colors">
+          {title(featured)}
+        </h2>
+        <p class="mt-4 opacity-70 leading-relaxed">{excerpt(featured, 220)}</p>
+        <span class="mt-6 font-semibold text-primary">{txt.more}</span>
+      </div>
+    </a>
+  )}
+
+  {rest.length > 0 && (
+    <div class="mt-8 grid gap-7 md:grid-cols-2 xl:grid-cols-3">
+      {rest.map((p, i) => (
+        <a
+          href={translatePath(`/blog/${p.slug}`)}
+          class="reveal group flex flex-col overflow-hidden rounded-[2rem] border border-base-300 bg-base-100 shadow-sm hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300"
+          style={`--reveal-delay: ${(i % 3) * 80}ms`}
+        >
+          <figure class="relative aspect-[16/10] overflow-hidden">
+            <img
+              src={p.coverImageUrl ?? FALLBACK}
+              alt=""
+              loading="lazy"
+              class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+            />
+          </figure>
+          <div class="flex flex-1 flex-col p-6">
+            <p class="text-xs font-medium uppercase tracking-wider opacity-55">
+              {date(p)} · {minutes(p)} {txt.read}
+            </p>
+            <h3 class="mt-3 text-xl font-semibold leading-snug group-hover:text-primary transition-colors">{title(p)}</h3>
+            <p class="mt-2 text-sm opacity-65 line-clamp-3">{excerpt(p)}</p>
+            <span class="mt-auto pt-4 text-sm font-semibold text-primary">{txt.more}</span>
+          </div>
+        </a>
+      ))}
+    </div>
+  )}
+
+  {posts.length === 0 && <p class="text-center opacity-60 py-16">{txt.empty}</p>}
+</section>
+

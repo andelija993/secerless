@@ -34,6 +34,10 @@ export default function ProfileMenu({ lang }: Props) {
     const storedTheme = localStorage.getItem(THEME_KEY) as 'secerless' | 'secerless-dark' | null;
     const initialTheme = storedTheme || document.documentElement.getAttribute('data-theme') || 'secerless';
     setTheme(initialTheme as 'secerless' | 'secerless-dark');
+    // Stay in sync with the navbar's quick theme toggle
+    const onTheme = (e: Event) => setTheme((e as CustomEvent).detail);
+    window.addEventListener('secerless:theme', onTheme);
+    return () => window.removeEventListener('secerless:theme', onTheme);
   }, []);
 
   // Close dropdown when clicking outside
@@ -52,6 +56,7 @@ export default function ProfileMenu({ lang }: Props) {
     setTheme(next);
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem(THEME_KEY, next);
+    window.dispatchEvent(new CustomEvent('secerless:theme', { detail: next }));
   }
 
   function switchLanguage(targetLang: Lang) {
@@ -93,7 +98,7 @@ export default function ProfileMenu({ lang }: Props) {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 w-64 bg-base-100 rounded-box shadow-xl border border-base-300 p-3 z-50">
+        <div className="absolute right-0 mt-4 w-64 bg-base-100 rounded-box shadow-2xl border border-base-300 p-3 z-50">
           {/* Identity header */}
           <div className="px-2 py-1 mb-2">
             <p className="font-semibold">

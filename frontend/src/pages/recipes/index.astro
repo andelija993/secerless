@@ -1,40 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { getLangFromUrl, useTranslations, useTranslatedPath } from '../../i18n/utils';
-import { getRecipes } from '../../lib/api';
-import FavoriteButton from '../../components/FavoriteButton';
-
-const lang = getLangFromUrl(Astro.url);
-const t = useTranslations(lang);
-const translatePath = useTranslatedPath(lang);
-
-const recipes = await getRecipes();
+import RecipesIndexView from '../../components/RecipesIndexView.astro';
 ---
-
 <Layout title="Recipes — Šećerless">
-  <section class="max-w-6xl mx-auto px-4 py-16">
-    <h1 class="text-4xl font-bold mb-8">{t('recipes.title')}</h1>
-    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {recipes.map((r) => (
-        <div class="card bg-base-100 shadow-md hover:shadow-xl transition-shadow">
-          <a href={translatePath(`/recipes/${r.slug}`)}>
-            <figure><img src={r.imageUrl ?? undefined} alt={r.title} class="h-44 w-full object-cover" /></figure>
-          </a>
-          <div class="card-body">
-            <a href={translatePath(`/recipes/${r.slug}`)} class="flex-1">
-              {r.category && <span class="badge badge-secondary badge-sm mb-1">{r.category.name}</span>}
-              <h3 class="card-title">{r.title}</h3>
-            </a>
-            <div class="card-actions justify-end mt-1">
-              <FavoriteButton recipeId={r.id} lang={lang} client:load />
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-    {recipes.length === 0 && (
-      <p class="text-center opacity-60">No recipes yet — check back soon!</p>
-    )}
-  </section>
+  <RecipesIndexView lang="en" />
 </Layout>
-

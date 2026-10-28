@@ -21,8 +21,24 @@ export const ui = {
     'home.subtitle':
       "What started as sugar-free treats has grown into all my favorite recipes — from my kitchen to yours, plus stories, tips, and a place to ask questions or collaborate.",
     'home.cta': 'Browse Recipes',
-    'home.topRecipes': '🔥 Top Recipes',
+    'home.topRecipes': 'Top Recipes',
     'home.sliderNote': '(This will become a proper animated carousel React island in Phase 8 👀)',
+    'home.eyebrow': 'Home cooking · Sugar-free treats · Stories',
+    'home.headline1': 'Recipes worth',
+    'home.headline2': 'sharing.',
+    'home.ctaBlog': 'Read the blog',
+    'home.statRecipes': 'recipes',
+    'home.statPosts': 'stories',
+    'home.statLangs': 'languages',
+    'home.categories': 'Find something tasty',
+    'home.categoriesSub': "Browse by what you're craving.",
+    'home.featuredEyebrow': 'Fresh from the kitchen',
+    'home.latestStories': 'Latest stories',
+    'home.allPosts': 'All stories →',
+    'home.allRecipes': 'All recipes →',
+    'home.instaTitle': 'Cooking along on Instagram?',
+    'home.instaText': 'Daily bites, behind-the-scenes and new recipes first — come say hi.',
+    'home.instaCta': 'Follow @secerless',
 
     'about.title': 'About Me',
     'about.p1':
@@ -41,6 +57,10 @@ export const ui = {
     'contact.submit': 'Send Message',
 
     'recipes.title': 'All Recipes',
+    'recipes.subtitle': 'Every recipe from my kitchen — sugar-free treats, comfort food and family favourites.',
+    'recipes.all': 'All',
+    'recipes.empty': 'No recipes yet — check back soon!',
+    'recipes.view': 'View recipe',
     'recipes.save': '❤️ Save to Favorites',
     'recipes.ingredients': 'Ingredients',
     'recipes.steps': 'Steps',
@@ -75,6 +95,9 @@ export const ui = {
 
     'footer.tagline': 'recipes, stories & collaboration',
     'footer.builtWith': 'Built with Astro, React & Tailwind',
+    'footer.explore': 'Explore',
+    'footer.follow': 'Follow along',
+    'footer.followText': 'New recipes and kitchen stories every week.',
 
     // Profile menu (avatar dropdown)
     'profile.login': 'Log In',
@@ -106,8 +129,24 @@ export const ui = {
     'home.subtitle':
       'Sve je počelo kao stranica za deserte bez šećera, a preraslo je u sve moje omiljene recepte — iz moje kuhinje za vašu, uz priče, savete i mesto gde možete da postavite pitanja ili predložite saradnju.',
     'home.cta': 'Pogledaj recepte',
-    'home.topRecipes': '🔥 Najbolji recepti',
+    'home.topRecipes': 'Najbolji recepti',
     'home.sliderNote': '(Ovo će postati pravi animirani slajder u Fazi 8 👀)',
+    'home.eyebrow': 'Domaća kuhinja · Slatkiši bez šećera · Priče',
+    'home.headline1': 'Recepti vredni',
+    'home.headline2': 'deljenja.',
+    'home.ctaBlog': 'Čitaj blog',
+    'home.statRecipes': 'recepata',
+    'home.statPosts': 'priča',
+    'home.statLangs': 'jezika',
+    'home.categories': 'Pronađi nešto ukusno',
+    'home.categoriesSub': 'Izaberi po tome šta ti se jede.',
+    'home.featuredEyebrow': 'Sveže iz kuhinje',
+    'home.latestStories': 'Najnovije priče',
+    'home.allPosts': 'Sve priče →',
+    'home.allRecipes': 'Svi recepti →',
+    'home.instaTitle': 'Kuvaš sa mnom na Instagramu?',
+    'home.instaText': 'Svakodnevni zalogaji, iza kulisa i novi recepti prvi — svrati da se pozdravimo.',
+    'home.instaCta': 'Prati @secerless',
 
     'about.title': 'O meni',
     'about.p1':
@@ -126,6 +165,10 @@ export const ui = {
     'contact.submit': 'Pošalji poruku',
 
     'recipes.title': 'Svi recepti',
+    'recipes.subtitle': 'Svi recepti iz moje kuhinje — slatkiši bez šećera, domaća jela i porodični favoriti.',
+    'recipes.all': 'Sve',
+    'recipes.empty': 'Još nema recepata — svratite uskoro!',
+    'recipes.view': 'Pogledaj recept',
     'recipes.save': '❤️ Sačuvaj u omiljene',
     'recipes.ingredients': 'Sastojci',
     'recipes.steps': 'Koraci',
@@ -160,6 +203,9 @@ export const ui = {
 
     'footer.tagline': 'recepti, priče i saradnja',
     'footer.builtWith': 'Napravljeno pomoću Astro, React i Tailwind',
+    'footer.explore': 'Istraži',
+    'footer.follow': 'Prati me',
+    'footer.followText': 'Novi recepti i kuhinjske priče svake nedelje.',
 
     // Profile menu (avatar dropdown)
     'profile.login': 'Prijava',

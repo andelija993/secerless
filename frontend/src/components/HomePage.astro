@@ -1,0 +1,232 @@
+---
+// HomePage — shared homepage for EN (/) and SR (/sr).
+import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
+import { getRecipes, getPosts } from '../lib/api';
+import TopRecipesSlider from './TopRecipesSlider';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const translatePath = useTranslatedPath(lang);
+const isSr = lang === 'sr';
+
+const [recipes, posts] = await Promise.all([getRecipes(), getPosts()]);
+const topRecipes = recipes.slice(0, 5);
+const latestPosts = posts.slice(0, 3);
+
+const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=900';
+const heroImages = [...recipes.map((r) => r.imageUrl).filter(Boolean), FALLBACK, FALLBACK, FALLBACK].slice(0, 3) as string[];
+
+// Unique categories that actually have recipes, with a count
+const emoji: Record<string, string> = {
+  breakfast: '🥞',
+  lunch: '🥗',
+  dinner: '🍝',
+  drink: '🥤',
+  dessert: '🍰',
+  'ice-cream': '🍨',
+};
+const categoryMap = new Map<string, { name: string; slug: string; count: number }>();
+for (const r of recipes) {
+  if (!r.category) continue;
+  const c = categoryMap.get(r.category.slug) ?? { ...r.category, count: 0 };
+  c.count++;
+  categoryMap.set(r.category.slug, c);
+}
+const categories = [...categoryMap.values()];
+
+const postTitle = (p: (typeof posts)[number]) => (isSr ? p.titleSr?.trim() || p.title : p.title);
+const postExcerpt = (p: (typeof posts)[number]) => {
+  const text = (isSr ? p.contentSr?.trim() || p.content : p.content)
+    .replace(/^\s*#\s+.+\n+/, '')
+    .replace(/[#*_`>-]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return text.length > 120 ? `${text.slice(0, 120).trim()}…` : text;
+};
+const fmtDate = (d: string) =>
+  new Date(d).toLocaleDateString(isSr ? 'sr-Latn-RS' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+---
+
+<!-- ================= HERO ================= -->
+<section class="relative -mt-[4.5rem] pt-[4.5rem] overflow-hidden bg-blobs">
+  <div class="max-w-6xl mx-auto px-4 py-16 md:py-24 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] items-center">
+    <div class="reveal">
+      <span class="inline-flex items-center gap-2 rounded-full glass-surface px-4 py-1.5 text-xs font-semibold tracking-wide text-primary">
+        <span class="h-2 w-2 rounded-full bg-primary animate-pulse"></span>
+        {t('home.eyebrow')}
+      </span>
+      <h1 class="mt-6 text-5xl sm:text-6xl lg:text-7xl font-semibold leading-[1.02]">
+        {t('home.headline1')}<br />
+        <span class="text-gradient italic">{t('home.headline2')}</span>
+      </h1>
+      <p class="mt-6 max-w-xl text-lg leading-relaxed opacity-75">{t('home.subtitle')}</p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href={translatePath('/recipes')} class="btn btn-primary btn-lg rounded-full px-8 shadow-lg shadow-primary/25">
+          {t('home.cta')}
+          <span aria-hidden="true">→</span>
+        </a>
+        <a href={translatePath('/blog')} class="btn btn-ghost btn-lg rounded-full px-8 border border-base-300">
+          {t('home.ctaBlog')}
+        </a>
+      </div>
+
+      <dl class="mt-12 flex gap-10">
+        <div>
+          <dt class="sr-only">{t('home.statRecipes')}</dt>
+          <dd class="font-display text-4xl font-semibold">{recipes.length}</dd>
+          <p class="text-sm opacity-60">{t('home.statRecipes')}</p>
+        </div>
+        <div>
+          <dt class="sr-only">{t('home.statPosts')}</dt>
+          <dd class="font-display text-4xl font-semibold">{posts.length}</dd>
+          <p class="text-sm opacity-60">{t('home.statPosts')}</p>
+        </div>
+        <div>
+          <dt class="sr-only">{t('home.statLangs')}</dt>
+          <dd class="font-display text-4xl font-semibold">2</dd>
+          <p class="text-sm opacity-60">{t('home.statLangs')}</p>
+        </div>
+      </dl>
+    </div>
+
+    <!-- Image collage -->
+    <div class="relative h-[420px] sm:h-[500px] reveal" style="--reveal-delay: 150ms">
+      <img
+        src={heroImages[0]}
+        alt=""
+        class="absolute right-0 top-0 h-[78%] w-[68%] rounded-[2.5rem] object-cover shadow-2xl ring-8 ring-base-100"
+      />
+      <img
+        src={heroImages[1]}
+        alt=""
+        class="absolute left-0 bottom-0 h-[52%] w-[48%] rounded-[2rem] object-cover shadow-2xl ring-8 ring-base-100 -rotate-3"
+      />
+      <img
+        src={heroImages[2]}
+        alt=""
+        class="absolute right-[8%] bottom-[2%] h-[30%] w-[30%] rounded-[1.5rem] object-cover shadow-xl ring-8 ring-base-100 rotate-6 hidden sm:block"
+      />
+      <div class="absolute left-[6%] top-[12%] glass-surface rounded-2xl px-4 py-3 shadow-xl animate-float">
+        <p class="text-2xl">🍰</p>
+        <p class="text-xs font-semibold mt-1">{isSr ? 'Bez šećera' : 'Sugar-free'}</p>
+      </div>
+      <div class="absolute right-[4%] top-[70%] sm:top-[60%] glass-surface rounded-full px-4 py-2 shadow-xl animate-float hidden sm:flex items-center gap-2" style="animation-delay: -3s">
+        <span class="text-primary">♥</span>
+        <span class="text-xs font-semibold">{isSr ? 'Iz moje kuhinje' : 'From my kitchen'}</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CATEGORIES ================= -->
+{categories.length > 0 && (
+  <section class="max-w-6xl mx-auto px-4 pt-8 pb-4">
+    <div class="reveal">
+      <h2 class="text-3xl md:text-4xl font-semibold">{t('home.categories')}</h2>
+      <p class="mt-2 opacity-60">{t('home.categoriesSub')}</p>
+    </div>
+    <div class="mt-8 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      {categories.map((c, i) => (
+        <a
+          href={`${translatePath('/recipes')}?category=${c.slug}`}
+          class="reveal group rounded-3xl border border-base-300 bg-base-100 p-5 text-center hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl transition-all duration-300"
+          style={`--reveal-delay: ${i * 60}ms`}
+        >
+          <span class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-base-200 text-3xl group-hover:scale-110 group-hover:bg-primary/10 transition-transform">
+            {emoji[c.slug] ?? '🍽️'}
+          </span>
+          <p class="mt-3 font-semibold">{c.name}</p>
+          <p class="text-xs opacity-50">{c.count}</p>
+        </a>
+      ))}
+    </div>
+  </section>
+)}
+
+<!-- ================= FEATURED RECIPES ================= -->
+<section class="max-w-6xl mx-auto px-4 py-20">
+  <div class="flex flex-wrap items-end justify-between gap-4 mb-10 reveal">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.25em] text-primary">{t('home.featuredEyebrow')}</p>
+      <h2 class="mt-2 text-3xl md:text-4xl font-semibold">{t('home.topRecipes')}</h2>
+    </div>
+    <a href={translatePath('/recipes')} class="link link-hover text-primary font-medium">{t('home.allRecipes')}</a>
+  </div>
+
+  {topRecipes.length > 0 ? (
+    <div class="reveal">
+      <TopRecipesSlider recipes={topRecipes} basePath={translatePath('/recipes')} client:visible />
+    </div>
+  ) : (
+    <p class="text-center opacity-60">{t('recipes.empty')}</p>
+  )}
+</section>
+
+<!-- ================= LATEST STORIES (bento) ================= -->
+{latestPosts.length > 0 && (
+  <section class="max-w-6xl mx-auto px-4 pb-20">
+    <div class="flex flex-wrap items-end justify-between gap-4 mb-10 reveal">
+      <h2 class="text-3xl md:text-4xl font-semibold">{t('home.latestStories')}</h2>
+      <a href={translatePath('/blog')} class="link link-hover text-primary font-medium">{t('home.allPosts')}</a>
+    </div>
+
+    <div class="grid gap-6 md:grid-cols-2 md:grid-rows-2">
+      {latestPosts.map((p, i) => (
+        <a
+          href={translatePath(`/blog/${p.slug}`)}
+          class:list={[
+            'reveal group relative overflow-hidden rounded-[2rem] min-h-64 flex items-end shadow-lg hover:shadow-2xl transition-shadow',
+            i === 0 && 'md:row-span-2 min-h-96',
+          ]}
+          style={`--reveal-delay: ${i * 100}ms`}
+        >
+          <img
+            src={p.coverImageUrl ?? FALLBACK}
+            alt=""
+            loading="lazy"
+            class="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent"></div>
+          <div class="relative p-6 md:p-8 text-white">
+            <p class="text-xs uppercase tracking-widest opacity-75">{fmtDate(p.publishedAt)}</p>
+            <h3 class:list={['mt-2 font-semibold leading-tight', i === 0 ? 'text-3xl md:text-4xl' : 'text-2xl']}>
+              {postTitle(p)}
+            </h3>
+            {i === 0 && <p class="mt-3 max-w-md text-white/80">{postExcerpt(p)}</p>}
+            <span class="mt-4 inline-flex items-center gap-2 text-sm font-semibold">
+              {isSr ? 'Pročitaj' : 'Read story'}
+              <span class="transition-transform group-hover:translate-x-1">→</span>
+            </span>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+)}
+
+<!-- ================= INSTAGRAM CTA ================= -->
+<section class="max-w-6xl mx-auto px-4">
+  <div class="reveal relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-primary via-primary to-secondary px-8 py-14 md:px-16 text-primary-content shadow-2xl shadow-primary/20">
+    <div class="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-2xl"></div>
+    <div class="pointer-events-none absolute -bottom-20 left-1/3 h-56 w-56 rounded-full bg-white/10 blur-2xl"></div>
+    <div class="relative flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+      <div class="max-w-xl">
+        <h2 class="text-3xl md:text-4xl font-semibold">{t('home.instaTitle')}</h2>
+        <p class="mt-3 text-lg opacity-85">{t('home.instaText')}</p>
+      </div>
+      <a
+        href="https://instagram.com/secerless"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="btn btn-lg rounded-full bg-base-100 text-base-content border-0 hover:scale-105 transition-transform shadow-lg"
+      >
+        {t('home.instaCta')} ↗
+      </a>
+    </div>
+  </div>
+</section>
+
