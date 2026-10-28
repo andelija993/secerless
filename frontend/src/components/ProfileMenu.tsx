@@ -6,7 +6,6 @@ interface Props {
   lang: Lang;
 }
 
-const THEME_KEY = 'secerless_theme';
 
 function getInitials(user: AuthUser) {
   const a = user.firstName?.[0] ?? '';
@@ -21,7 +20,6 @@ export default function ProfileMenu({ lang }: Props) {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const [theme, setTheme] = useState<'secerless' | 'secerless-dark'>('secerless');
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Ask the backend "who am I?" — the httpOnly JWT cookie (if any) is sent
@@ -30,14 +28,6 @@ export default function ProfileMenu({ lang }: Props) {
     getMe()
       .then(setUser)
       .finally(() => setLoading(false));
-
-    const storedTheme = localStorage.getItem(THEME_KEY) as 'secerless' | 'secerless-dark' | null;
-    const initialTheme = storedTheme || document.documentElement.getAttribute('data-theme') || 'secerless';
-    setTheme(initialTheme as 'secerless' | 'secerless-dark');
-    // Stay in sync with the navbar's quick theme toggle
-    const onTheme = (e: Event) => setTheme((e as CustomEvent).detail);
-    window.addEventListener('secerless:theme', onTheme);
-    return () => window.removeEventListener('secerless:theme', onTheme);
   }, []);
 
   // Close dropdown when clicking outside
@@ -51,20 +41,6 @@ export default function ProfileMenu({ lang }: Props) {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  function toggleTheme() {
-    const next = theme === 'secerless' ? 'secerless-dark' : 'secerless';
-    setTheme(next);
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem(THEME_KEY, next);
-    window.dispatchEvent(new CustomEvent('secerless:theme', { detail: next }));
-  }
-
-  function switchLanguage(targetLang: Lang) {
-    if (targetLang === lang) return;
-    // Strip current lang prefix from pathname, then rebuild for target lang
-    const path = window.location.pathname.replace(/^\/(en|sr)/, '') || '/';
-    window.location.href = translatePath(path, targetLang);
-  }
 
   function handleLogout() {
     apiLogout().then(() => {
@@ -134,34 +110,6 @@ export default function ProfileMenu({ lang }: Props) {
             </>
           )}
 
-          <div className="divider my-1"></div>
-
-          {/* Language switcher */}
-          <div className="px-2 py-1">
-            <p className="text-xs uppercase opacity-60 mb-1">{t('profile.language')}</p>
-            <div className="join w-full">
-              <button
-                onClick={() => switchLanguage('en')}
-                className={`btn btn-sm join-item flex-1 ${lang === 'en' ? 'btn-primary' : 'btn-outline'}`}
-              >
-                EN
-              </button>
-              <button
-                onClick={() => switchLanguage('sr')}
-                className={`btn btn-sm join-item flex-1 ${lang === 'sr' ? 'btn-primary' : 'btn-outline'}`}
-              >
-                SR
-              </button>
-            </div>
-          </div>
-
-          {/* Theme switcher */}
-          <div className="px-2 py-1 mt-2">
-            <p className="text-xs uppercase opacity-60 mb-1">{t('profile.theme')}</p>
-            <button onClick={toggleTheme} className="btn btn-outline btn-sm w-full justify-start">
-              {theme === 'secerless' ? `☀️ ${t('profile.themeLight')}` : `🌙 ${t('profile.themeDark')}`}
-            </button>
-          </div>
 
           {user && (
             <>

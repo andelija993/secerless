@@ -17,6 +17,12 @@ const navLinks = [
   { href: translatePath('/contact'), label: t('nav.contact') },
 ];
 
+// Language switch: same page in the other language (filters like ?category= are added on click)
+const langLinks = [
+  { code: 'en', label: 'EN', href: translatePath(Astro.url.pathname, 'en') },
+  { code: 'sr', label: 'SR', href: translatePath(Astro.url.pathname, 'sr') },
+] as const;
+
 // Highlight the current section (home only matches exactly)
 const current = Astro.url.pathname.replace(/\/$/, '') || '/';
 function isActive(href: string) {
@@ -53,6 +59,23 @@ function isActive(href: string) {
     </ul>
 
     <div class="flex items-center gap-1">
+      <!-- Language switch -->
+      <div class="flex items-center rounded-full bg-base-200/70 p-0.5 text-xs font-semibold" role="group" aria-label="Language">
+        {langLinks.map((l) => (
+          <a
+            href={l.href}
+            hreflang={l.code}
+            aria-current={lang === l.code ? 'true' : undefined}
+            class:list={[
+              'rounded-full px-2.5 py-1.5 transition-colors',
+              lang === l.code ? 'bg-primary text-primary-content shadow-sm' : 'opacity-70 hover:opacity-100',
+            ]}
+          >
+            {l.label}
+          </a>
+        ))}
+      </div>
+
       <!-- Quick theme toggle -->
       <button
         type="button"
