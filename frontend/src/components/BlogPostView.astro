@@ -1,0 +1,280 @@
+---
+// BlogPostView — shared editorial layout for a single blog post.
+// Used by both /blog/[slug] (EN) and /sr/blog/[slug] (SR) so the design lives in one place.
+import { marked } from 'marked';
+import { getPosts, type BlogPostSummary } from '../lib/api';
+import { useTranslatedPath, type Lang } from '../i18n/utils';
+
+interface Props {
+  post: BlogPostSummary;
+  lang: Lang;
+}
+
+const { post, lang } = Astro.props;
+const isSr = lang === 'sr';
+const translatePath = useTranslatedPath(lang);
+
+const localTitle = (p: BlogPostSummary) => (isSr ? p.titleSr?.trim() || p.title : p.title);
+const localContent = (p: BlogPostSummary) => (isSr ? p.contentSr?.trim() || p.content : p.content);
+
+const title = localTitle(post);
+let content = localContent(post);
+
+// Many posts start with "# Title" — the hero already shows the title, so drop the duplicate H1.
+content = content.replace(/^\s*#\s+.+\n+/, '');
+
+const contentHtml = await marked.parse(content);
+
+// Lead paragraph = first non-heading paragraph, used as the hero subtitle
+const lead = content
+  .split(/\n{2,}/)
+  .map((b) => b.trim())
+  .find((b) => b && !b.startsWith('#') && !b.startsWith('-') && !b.startsWith('>'))
+  ?.replace(/[*_`]/g, '');
+const leadShort = lead && lead.length > 180 ? `${lead.slice(0, 180).trim()}…` : lead;
+
+const authorName = [post.author?.firstName, post.author?.lastName].filter(Boolean).join(' ') || 'Šećerless';
+const initials = authorName
+  .split(' ')
+  .map((w) => w[0])
+  .join('')
+  .slice(0, 2)
+  .toUpperCase();
+
+const formattedDate = new Date(post.publishedAt).toLocaleDateString(isSr ? 'sr-Latn-RS' : 'en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+
+const words = content.split(/\s+/).filter(Boolean).length;
+const readingMinutes = Math.max(1, Math.round(words / 200));
+
+const cover = post.coverImageUrl ?? 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1600';
+
+// "More stories" — up to 3 other posts
+const allPosts = await getPosts();
+const related = allPosts.filter((p) => p.slug !== post.slug).slice(0, 3);
+
+const txt = isSr
+  ? { back: '← Nazad na blog', by: 'Autor', read: 'min čitanja', more: 'Još priča', readMore: 'Pročitaj →', journal: 'Kuhinjske beleške', share: 'Podeli', copied: 'Link je kopiran' }
+  : { back: '← Back to blog', by: 'By', read: 'min read', more: 'More stories', readMore: 'Read →', journal: 'Kitchen Notes', share: 'Share', copied: 'Link copied' };
+---
+
+<article class="blog-post">
+  <!-- Hero -->
+  <header class="relative isolate overflow-hidden">
+    <img src={cover} alt={title} class="absolute inset-0 -z-10 h-full w-full object-cover" />
+    <div class="absolute inset-0 -z-10 bg-gradient-to-t from-black/85 via-black/45 to-black/20"></div>
+
+    <div class="max-w-4xl mx-auto px-4 pt-10 pb-16 md:pt-14 md:pb-24 min-h-[60vh] flex flex-col justify-between text-white">
+      <a href={translatePath('/blog')} class="btn btn-sm btn-ghost text-white/90 hover:bg-white/15 w-fit -ml-3">
+        {txt.back}
+      </a>
+
+      <div class="mt-16">
+        <span class="badge badge-primary border-0 mb-5 uppercase tracking-widest text-[0.7rem] px-3 py-3">
+          {txt.journal}
+        </span>
+        <h1 class="text-4xl md:text-6xl font-bold leading-[1.05] tracking-tight drop-shadow-sm">{title}</h1>
+        {leadShort && <p class="mt-5 max-w-2xl text-lg md:text-xl text-white/80 leading-relaxed">{leadShort}</p>}
+
+        <div class="mt-8 flex flex-wrap items-center gap-4 text-sm text-white/85">
+          <div class="flex items-center gap-3">
+            <div class="avatar avatar-placeholder">
+              <div class="w-10 rounded-full bg-primary text-primary-content font-semibold">
+                <span>{initials}</span>
+              </div>
+            </div>
+            <span class="font-medium">{txt.by} {authorName}</span>
+          </div>
+          <span class="opacity-50">•</span>
+          <time datetime={new Date(post.publishedAt).toISOString()}>{formattedDate}</time>
+          <span class="opacity-50">•</span>
+          <span>{readingMinutes} {txt.read}</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Body -->
+  <div class="relative max-w-4xl mx-auto px-4">
+    <div class="-mt-10 rounded-3xl bg-base-100 shadow-xl border border-base-200 px-6 py-10 md:px-14 md:py-14">
+      <div class="post-content" set:html={contentHtml} />
+
+      <div class="mt-12 pt-8 border-t border-base-300 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="avatar avatar-placeholder">
+            <div class="w-12 rounded-full bg-primary text-primary-content font-semibold">
+              <span>{initials}</span>
+            </div>
+          </div>
+          <div>
+            <p class="font-semibold">{authorName}</p>
+            <p class="text-sm opacity-60">{formattedDate}</p>
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline btn-primary btn-sm" data-share data-copied={txt.copied}>
+          🔗 {txt.share}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- More stories -->
+  {related.length > 0 && (
+    <section class="max-w-6xl mx-auto px-4 py-20">
+      <div class="flex items-end justify-between mb-8">
+        <h2 class="text-2xl md:text-3xl font-bold">{txt.more}</h2>
+        <a href={translatePath('/blog')} class="link link-primary text-sm">{txt.back.replace('← ', '')}</a>
+      </div>
+      <div class="grid gap-6 md:grid-cols-3">
+        {related.map((p) => (
+          <a
+            href={translatePath(`/blog/${p.slug}`)}
+            class="group card overflow-hidden bg-base-100 border border-base-200 shadow-md hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+          >
+            <figure class="overflow-hidden">
+              <img
+                src={p.coverImageUrl ?? 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800'}
+                alt={localTitle(p)}
+                class="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                loading="lazy"
+              />
+            </figure>
+            <div class="card-body p-5">
+              <h3 class="font-semibold text-lg leading-snug">{localTitle(p)}</h3>
+              <span class="text-sm text-primary font-medium mt-2">{txt.readMore}</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+</article>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-share]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const url = window.location.href;
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: document.title, url });
+          return;
+        } catch {
+          /* user cancelled — fall through to copy */
+        }
+      }
+      await navigator.clipboard.writeText(url);
+      window.dispatchEvent(
+        new CustomEvent('secerless:toast', { detail: { message: btn.dataset.copied, type: 'success' } })
+      );
+    });
+  });
+</script>
+
+<style>
+  /* Typography for rendered Markdown (no typography plugin needed) */
+  .post-content {
+    font-size: 1.125rem;
+    line-height: 1.85;
+  }
+  .post-content > :global(p:first-of-type::first-letter) {
+    float: left;
+    font-size: 4.2rem;
+    line-height: 0.9;
+    font-weight: 700;
+    margin: 0.35rem 0.6rem 0 0;
+    color: var(--color-primary);
+  }
+  .post-content :global(p) {
+    margin: 0 0 1.4rem;
+    opacity: 0.9;
+  }
+  .post-content :global(h1),
+  .post-content :global(h2) {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 2.8rem 0 1rem;
+    padding-left: 1rem;
+    border-left: 4px solid var(--color-primary);
+  }
+  .post-content :global(h3) {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 2rem 0 0.75rem;
+    color: var(--color-primary);
+  }
+  .post-content :global(ul),
+  .post-content :global(ol) {
+    margin: 0 0 1.6rem;
+    padding: 1.25rem 1.5rem 1.25rem 2.75rem;
+    background: var(--color-base-200);
+    border-radius: 1rem;
+  }
+  .post-content :global(ul) {
+    list-style: none;
+    padding-left: 1.5rem;
+  }
+  .post-content :global(ul li) {
+    position: relative;
+    padding-left: 1.6rem;
+  }
+  .post-content :global(ul li::before) {
+    content: '✦';
+    position: absolute;
+    left: 0;
+    color: var(--color-primary);
+    font-size: 0.85rem;
+    top: 0.2rem;
+  }
+  .post-content :global(ol) {
+    list-style: decimal;
+  }
+  .post-content :global(li) {
+    margin: 0.4rem 0;
+  }
+  .post-content :global(li::marker) {
+    color: var(--color-primary);
+    font-weight: 700;
+  }
+  .post-content :global(blockquote) {
+    margin: 2rem 0;
+    padding: 1.25rem 1.5rem;
+    border-left: 4px solid var(--color-secondary);
+    background: color-mix(in oklch, var(--color-secondary) 8%, transparent);
+    border-radius: 0 1rem 1rem 0;
+    font-style: italic;
+    font-size: 1.2rem;
+  }
+  .post-content :global(blockquote p) {
+    margin: 0;
+  }
+  .post-content :global(a) {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .post-content :global(strong) {
+    font-weight: 700;
+  }
+  .post-content :global(img) {
+    width: 100%;
+    border-radius: 1rem;
+    margin: 2rem 0;
+  }
+  .post-content :global(code) {
+    background: var(--color-base-200);
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.375rem;
+    font-size: 0.9em;
+  }
+  .post-content :global(hr) {
+    border: 0;
+    height: 1px;
+    background: var(--color-base-300);
+    margin: 2.5rem 0;
+  }
+</style>
+
