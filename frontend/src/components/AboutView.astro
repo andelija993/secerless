@@ -53,8 +53,8 @@ const content = {
   },
 }[isSr ? 'sr' : 'en'];
 
-// Portrait — set to e.g. '/about/andjelija.jpg' (placed in frontend/public/about/) once available.
-const portrait: string | null = null;
+// Portrait (frontend/public/about/). Set to null to show the placeholder instead.
+const portrait: string | null = '/about/andjelija.jpg';
 
 ---
 
@@ -63,7 +63,7 @@ const portrait: string | null = null;
   <div class="reveal flex flex-col items-center gap-10 text-center md:flex-row md:items-center md:text-left">
     <div class="shrink-0 h-48 w-48 md:h-60 md:w-60 overflow-hidden rounded-full ring-8 ring-base-200 shadow-xl bg-base-200 flex items-center justify-center">
       {portrait ? (
-        <img src={portrait} alt={content.signature} class="h-full w-full object-cover" />
+        <img src={portrait} alt={content.signature} class="h-full w-full object-cover object-[50%_30%]" />
       ) : (
         <span class="text-7xl" aria-hidden="true">👩‍🍳</span>
       )}
