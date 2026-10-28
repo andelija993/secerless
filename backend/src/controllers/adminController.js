@@ -12,7 +12,7 @@ export async function adminGetRecipes(req, res) {
         steps: { orderBy: { order: 'asc' } },
         images: { orderBy: { order: 'asc' } },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
     });
     res.json(recipes);
   } catch (err) {
@@ -44,7 +44,9 @@ function bulkAction(model, label) {
       if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ error: 'No items selected' });
       const where = { id: { in: ids.map(String) } };
       let result;
-      if (action === 'publish' || action === 'unpublish') {
+      if ((action === 'feature' || action === 'unfeature') && model === 'recipe') {
+        result = await prisma.recipe.updateMany({ where, data: { featured: action === 'feature' } });
+      } else if (action === 'publish' || action === 'unpublish') {
         result = await prisma[model].updateMany({ where, data: { published: action === 'publish' } });
       } else if (action === 'delete') {
         result = await prisma[model].deleteMany({ where });
@@ -62,3 +64,24 @@ function bulkAction(model, label) {
 // POST /api/admin/recipes/bulk and /api/admin/posts/bulk
 export const adminBulkRecipes = bulkAction('recipe', 'recipes');
 export const adminBulkPosts = bulkAction('blogPost', 'posts');
+
+// PUT /api/admin/recipes/order — { ids: string[] } in the desired order (first = top).
+// Recipes not in the list keep their position after the listed ones.
+export async function adminReorderRecipes(req, res) {
+  try {
+    const { ids } = req.body ?? {};
+    if (!Array.isArray(ids) || !ids.length) return res.status(400).json({ error: 'No order given' });
+    // One single UPDATE for all rows (130+ separate updates over the network
+    // exceeded Prisma's 5 s transaction timeout). WITH ORDINALITY gives 1, 2, 3…
+    const list = ids.map(String);
+    const count = await prisma.$executeRaw`
+      UPDATE "Recipe" AS r
+      SET "position" = v.ord::int
+      FROM unnest(${list}::text[]) WITH ORDINALITY AS v(id, ord)
+      WHERE r.id = v.id`;
+    res.json({ count });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to save the new order' });
+  }
+}

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { adminGetRecipes, adminGetPosts, adminBulkRecipes, adminBulkPosts } from '../controllers/adminController.js';
+import { adminGetRecipes, adminGetPosts, adminBulkRecipes, adminBulkPosts, adminReorderRecipes } from '../controllers/adminController.js';
 import { requireAdmin } from '../middleware/auth.js';
 
 const router = Router();
@@ -12,6 +12,9 @@ router.get('/posts', requireAdmin, adminGetPosts);
 // Bulk publish / unpublish / delete
 router.post('/recipes/bulk', requireAdmin, adminBulkRecipes);
 router.post('/posts/bulk', requireAdmin, adminBulkPosts);
+
+// Manual recipe order (drag & drop in the admin)
+router.put('/recipes/order', requireAdmin, adminReorderRecipes);
 
 export default router;
 

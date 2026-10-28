@@ -41,7 +41,7 @@ export async function getAllRecipes(req, res) {
     const recipes = await prisma.recipe.findMany({
       where: { published: true },
       include: { category: true, author: { select: { firstName: true, lastName: true } } },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ position: 'asc' }, { createdAt: 'desc' }],
     });
     res.json(recipes);
   } catch (err) {
@@ -73,9 +73,14 @@ export async function createRecipe(req, res) {
       ingredients = [], steps = [], images = [],
     } = req.body;
 
+    // New recipes go to the top of the manual order
+    const first = await prisma.recipe.findFirst({ orderBy: { position: 'asc' }, select: { position: true } });
+
     const recipe = await prisma.recipe.create({
       data: {
         title,
+        position: (first?.position ?? 1) - 1,
+        featured: !!req.body.featured,
         titleSr: emptyToNull(titleSr),
         slug,
         description,
@@ -122,6 +127,7 @@ export async function updateRecipe(req, res) {
         ...coverFraming(req.body),
         ...(categoryId !== undefined && { categoryId: categoryId || null }),
         ...(published !== undefined && { published }),
+        ...(req.body.featured !== undefined && { featured: !!req.body.featured }),
       },
     });
 

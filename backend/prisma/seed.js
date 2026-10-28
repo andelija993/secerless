@@ -52,6 +52,11 @@ async function main() {
     create: { name: 'Dessert', slug: 'dessert' },
   });
   await prisma.category.upsert({
+    where: { slug: 'healthy-dessert' },
+    update: { name: 'Healthy Desserts' },
+    create: { name: 'Healthy Desserts', slug: 'healthy-dessert' },
+  });
+  await prisma.category.upsert({
     where: { slug: 'ice-cream' },
     update: { name: 'Ice Cream' },
     create: { name: 'Ice Cream', slug: 'ice-cream' },

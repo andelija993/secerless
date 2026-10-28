@@ -50,6 +50,8 @@ model Recipe {
   imageZoom     Float    @default(1)  // cover framing: 1 = fit, up to 3
   videoUrl      String? // optional recipe video (e.g. imported Instagram reel)
   instagramId   String?  @unique // source post/reel — makes the Instagram import re-runnable
+  position      Int      @default(0)     // manual order set in the admin (lower = first)
+  featured      Boolean  @default(false) // shown in the homepage slider
   published   Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -66,6 +68,8 @@ model Recipe {
 
   favorites Favorite[]
   comments  Comment[]
+
+  @@index([position])
 }
 
 // Extra gallery photos for a recipe (optional, shown as a slider on the detail page)
