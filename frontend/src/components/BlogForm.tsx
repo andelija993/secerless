@@ -27,7 +27,6 @@ function mdToHtml(md: string): string {
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/`(.+?)`/g, '<code class="bg-base-300 px-1 rounded text-sm">$1</code>')
     .replace(/\n\n/g, '</p><p class="mb-3">')
-    .replace(/^(?!<[h|p|c])/gm, '')
     .replace(/^(.+)$/gm, (line) => (line.startsWith('<') ? line : `<p class="mb-3">${line}</p>`));
 }
 
@@ -44,11 +43,14 @@ interface Props {
 
 export default function BlogForm({ initial, onSave, onCancel }: Props) {
   const [title, setTitle] = useState<string>(initial?.title ?? '');
+  const [titleSr, setTitleSr] = useState<string>(initial?.titleSr ?? '');
   const [slug, setSlug] = useState<string>(initial?.slug ?? '');
   const [content, setContent] = useState<string>(initial?.content ?? '');
+  const [contentSr, setContentSr] = useState<string>(initial?.contentSr ?? '');
   const [coverImageUrl, setCoverImageUrl] = useState<string>(initial?.coverImageUrl ?? '');
   const [published, setPublished] = useState<boolean>(initial?.published ?? true);
   const [preview, setPreview] = useState(false);
+  const [previewLang, setPreviewLang] = useState<'en' | 'sr'>('en');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -57,14 +59,21 @@ export default function BlogForm({ initial, onSave, onCancel }: Props) {
     if (!initial) setSlug(slugify(v));
   }
 
+  function copyEnglishToSerbian() {
+    setTitleSr((prev) => (prev && prev.trim() ? prev : title));
+    setContentSr((prev) => (prev && prev.trim() ? prev : content));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setSaving(true);
     const result = await onSave({
       title,
+      titleSr: titleSr || null,
       slug,
       content,
+      contentSr: contentSr || null,
       coverImageUrl: coverImageUrl || null,
       published,
     });
@@ -74,22 +83,33 @@ export default function BlogForm({ initial, onSave, onCancel }: Props) {
     }
   }
 
+  const previewContent = previewLang === 'en' ? content : (contentSr || content);
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <h2 className="text-xl font-bold">{initial ? 'Edit Blog Post' : 'New Blog Post'}</h2>
 
       {error && <div className="alert alert-error text-sm py-2"><span>{error}</span></div>}
 
-      {/* Title */}
-      <label className="form-control">
-        <span className="label-text font-semibold mb-1">Title *</span>
-        <input
-          type="text" className="input input-bordered" value={title} required
-          onChange={(e) => handleTitleChange(e.target.value)}
-        />
-      </label>
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="form-control">
+          <span className="label-text font-semibold mb-1">English title *</span>
+          <input
+            type="text" className="input input-bordered" value={title} required
+            onChange={(e) => handleTitleChange(e.target.value)}
+          />
+        </label>
 
-      {/* Slug */}
+        <label className="form-control">
+          <span className="label-text font-semibold mb-1">Srpski naslov (optional)</span>
+          <input
+            type="text" className="input input-bordered" value={titleSr}
+            onChange={(e) => setTitleSr(e.target.value)}
+            placeholder="Leave empty if you want to keep only the English version"
+          />
+        </label>
+      </div>
+
       <label className="form-control">
         <span className="label-text font-semibold mb-1">
           Slug <span className="opacity-50 font-normal">(URL path — must be unique)</span>
@@ -106,33 +126,68 @@ export default function BlogForm({ initial, onSave, onCancel }: Props) {
 
       {/* Content with preview toggle */}
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <span className="label-text font-semibold">Content (Markdown) *</span>
-          <button
-            type="button"
-            className="btn btn-xs btn-ghost"
-            onClick={() => setPreview((p) => !p)}
-          >
-            {preview ? '✏️ Edit' : '👁 Preview'}
-          </button>
+        <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+          <span className="label-text font-semibold">English content *</span>
+          <div className="flex items-center gap-2">
+            {preview && (
+              <div className="btn-group btn-group-xs">
+                <button type="button" className={`btn ${previewLang === 'en' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setPreviewLang('en')}>EN</button>
+                <button type="button" className={`btn ${previewLang === 'sr' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setPreviewLang('sr')}>SR</button>
+              </div>
+            )}
+            <button
+              type="button"
+              className="btn btn-xs btn-ghost"
+              onClick={() => setPreview((p) => !p)}
+            >
+              {preview ? '✏️ Edit' : '👁 Preview'}
+            </button>
+          </div>
         </div>
+
         {preview ? (
           <div
             className="border border-base-300 rounded-xl p-4 min-h-48 bg-base-200 text-sm leading-relaxed overflow-auto"
-            dangerouslySetInnerHTML={{ __html: mdToHtml(content) || '<p class="opacity-40">Nothing to preview yet…</p>' }}
+            dangerouslySetInnerHTML={{ __html: mdToHtml(previewContent) || '<p class="opacity-40">Nothing to preview yet…</p>' }}
           />
         ) : (
-          <textarea
-            className="textarea textarea-bordered w-full font-mono text-sm leading-relaxed"
-            rows={14}
-            value={content}
-            required
-            placeholder={`# Post title\n\nWrite your post in **Markdown**...\n\n## A subheading\n\nMore text here.`}
-            onChange={(e) => setContent(e.target.value)}
-          />
+          <div className="space-y-4">
+            <div className="rounded-box border border-base-300 p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium">English</span>
+                <button type="button" className="btn btn-xs btn-ghost" onClick={() => setContent((prev) => prev)}>
+                  Main version
+                </button>
+              </div>
+              <textarea
+                className="textarea textarea-bordered w-full font-mono text-sm leading-relaxed"
+                rows={10}
+                value={content}
+                required
+                placeholder={`# Post title\n\nWrite your post in **Markdown**...`}
+                onChange={(e) => setContent(e.target.value)}
+              />
+            </div>
+
+            <div className="rounded-box border border-base-300 p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="font-medium">Srpski content (optional)</span>
+                <button type="button" className="btn btn-xs btn-outline" onClick={copyEnglishToSerbian}>
+                  Copy EN to SR
+                </button>
+              </div>
+              <textarea
+                className="textarea textarea-bordered w-full font-mono text-sm leading-relaxed"
+                rows={10}
+                value={contentSr}
+                placeholder={`# Naslov\n\nOstavite prazno ako želite da objava ostane samo na engleskom...`}
+                onChange={(e) => setContentSr(e.target.value)}
+              />
+            </div>
+          </div>
         )}
         <p className="text-xs opacity-50 mt-1">
-          Supports **bold**, *italic*, # headings, and paragraph breaks (blank line between paragraphs).
+          You can write only in English, only in Serbian, or in both. If Serbian is left empty, the English version will still be shown.
         </p>
       </div>
 
@@ -157,4 +212,3 @@ export default function BlogForm({ initial, onSave, onCancel }: Props) {
     </form>
   );
 }
-

@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 import { getMe } from '../lib/auth';
 import { checkFavorite, addFavorite, removeFavorite } from '../lib/favorites';
+import { showToast } from '../lib/toast';
 
 interface Props {
   recipeId: string;
@@ -12,7 +13,7 @@ interface Props {
 }
 
 export default function FavoriteButton({ recipeId, lang = 'en' }: Props) {
-  const [loggedIn, setLoggedIn] = useState<boolean | null>(null); // null = still loading
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
   const [favorited, setFavorited] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -26,7 +27,7 @@ export default function FavoriteButton({ recipeId, lang = 'en' }: Props) {
   }, [recipeId]);
 
   async function toggle(e: React.MouseEvent) {
-    e.preventDefault(); // don't follow parent <a> if button is inside a card link
+    e.preventDefault();
     e.stopPropagation();
 
     if (!loggedIn) {
@@ -35,14 +36,23 @@ export default function FavoriteButton({ recipeId, lang = 'en' }: Props) {
     }
 
     setLoading(true);
-    if (favorited) {
-      await removeFavorite(recipeId);
-      setFavorited(false);
-    } else {
-      await addFavorite(recipeId);
-      setFavorited(true);
+    try {
+      if (favorited) {
+        const { ok } = await removeFavorite(recipeId);
+        if (ok) {
+          setFavorited(false);
+          showToast('Removed from favorites');
+        }
+      } else {
+        const { ok } = await addFavorite(recipeId);
+        if (ok) {
+          setFavorited(true);
+          showToast('Saved to favorites');
+        }
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (
@@ -82,4 +92,3 @@ export default function FavoriteButton({ recipeId, lang = 'en' }: Props) {
     </button>
   );
 }
-

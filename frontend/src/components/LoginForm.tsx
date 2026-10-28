@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
 import { login } from '../lib/auth';
+import { showToast } from '../lib/toast';
 
 interface Props {
   lang: Lang;
@@ -25,11 +26,11 @@ export default function LoginForm({ lang }: Props) {
     setLoading(false);
     if (!ok) {
       setError(data?.error || t('login.genericError'));
+      showToast(data?.error || t('login.genericError'), 'error');
       return;
     }
 
-    // Full page reload so every component (navbar, profile menu) re-checks
-    // auth state via GET /api/auth/me on the freshly-set cookie.
+    showToast('Logged in successfully');
     window.location.href = translatePath('/');
   }
 
@@ -62,4 +63,3 @@ export default function LoginForm({ lang }: Props) {
     </form>
   );
 }
-

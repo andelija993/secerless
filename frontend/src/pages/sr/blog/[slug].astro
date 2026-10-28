@@ -1,6 +1,6 @@
 ---
 import Layout from '../../../layouts/Layout.astro';
-import { getPosts, getPostBySlug } from '../../../lib/api';
+import { getPosts, getPostBySlug, translateBlogPost } from '../../../lib/api';
 import { marked } from 'marked';
 
 export async function getStaticPaths() {
@@ -15,7 +15,10 @@ if (!post) {
   return Astro.redirect('/404');
 }
 
-const contentHtml = marked.parse(post.content);
+const translated = await translateBlogPost(post);
+const title = translated.title;
+const content = translated.content;
+const contentHtml = marked.parse(content);
 const authorName = [post.author?.firstName, post.author?.lastName].filter(Boolean).join(' ');
 const formattedDate = new Date(post.publishedAt).toLocaleDateString('sr-RS', {
   year: 'numeric',
@@ -24,16 +27,16 @@ const formattedDate = new Date(post.publishedAt).toLocaleDateString('sr-RS', {
 });
 ---
 
-<Layout title={`${post.title} — Šećerless`}>
+<Layout title={`${title} — Šećerless`}>
   <article class="max-w-3xl mx-auto px-4 py-16 prose max-w-none">
     {post.coverImageUrl && (
       <img
         src={post.coverImageUrl}
-        alt={post.title}
+        alt={title}
         class="rounded-2xl w-full h-80 object-cover mb-8 not-prose"
       />
     )}
-    <h1>{post.title}</h1>
+    <h1>{title}</h1>
     <p class="opacity-60 text-sm">
       {authorName && <>Autor: {authorName} · </>}{formattedDate}
     </p>

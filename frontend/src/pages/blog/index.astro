@@ -9,26 +9,61 @@ const translatePath = useTranslatedPath(lang);
 
 const posts = await getPosts();
 
-// Strip markdown syntax roughly for a plain-text excerpt preview.
-function excerpt(content: string, length = 140) {
-  const plain = content.replace(/[#*_`>\-]/g, '').trim();
-  return plain.length > length ? plain.slice(0, length) + '…' : plain;
+function excerpt(content: string, length = 170) {
+  const plain = content
+    .replace(/[#*_`>]/g, '')
+    .replace(/\n+/g, ' ')
+    .trim();
+  return plain.length > length ? `${plain.slice(0, length).trim()}…` : plain;
+}
+
+function getLocalizedTitle(post: { title: string; titleSr?: string | null }, lang: string) {
+  return lang === 'sr' ? (post.titleSr?.trim() || post.title) : post.title;
+}
+
+function getLocalizedContent(post: { content: string; contentSr?: string | null }, lang: string) {
+  return lang === 'sr' ? (post.contentSr?.trim() || post.content) : post.content;
 }
 ---
 
 <Layout title="Blog — Šećerless">
-  <section class="max-w-3xl mx-auto px-4 py-16">
-    <h1 class="text-4xl font-bold mb-8">{t('blog.title')}</h1>
-    <div class="flex flex-col gap-4">
-      {posts.map((p) => (
-        <a href={translatePath(`/blog/${p.slug}`)} class="card bg-base-100 shadow-md hover:shadow-xl transition-shadow">
-          <div class="card-body">
-            <h3 class="card-title">{p.title}</h3>
-            <p class="opacity-70">{excerpt(p.content)}</p>
-          </div>
-        </a>
-      ))}
+  <section class="max-w-6xl mx-auto px-4 py-16">
+    <div class="mb-10 text-center">
+      <p class="text-sm uppercase tracking-[0.25em] text-primary font-semibold mb-3">Journal</p>
+      <h1 class="text-4xl md:text-5xl font-bold mb-4">{t('blog.title')}</h1>
+      <p class="mx-auto max-w-2xl text-base md:text-lg opacity-70">
+        Stories, kitchen notes, and thoughtful food writing from my table to yours.
+      </p>
     </div>
+
+    <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      {posts.map((p) => {
+        const title = getLocalizedTitle(p, lang);
+        const content = getLocalizedContent(p, lang);
+        return (
+          <a href={translatePath(`/blog/${p.slug}`)} class="group card overflow-hidden bg-base-100 shadow-lg hover:shadow-2xl transition-all duration-300 border border-base-200 hover:-translate-y-1">
+            <figure class="relative overflow-hidden">
+              <img
+                src={p.coverImageUrl ?? 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1200'}
+                alt={title}
+                class="h-64 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              />
+              <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+              <span class="absolute bottom-3 left-3 badge badge-primary badge-sm">Kitchen Notes</span>
+            </figure>
+            <div class="card-body p-5">
+              <h3 class="card-title text-xl leading-tight">{title}</h3>
+              <p class="text-sm opacity-70 mt-2">{excerpt(content)}</p>
+              <div class="mt-4 flex items-center justify-between text-xs opacity-60">
+                <span>{new Date(p.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                <span class="font-medium">Read more →</span>
+              </div>
+            </div>
+          </a>
+        );
+      })}
+    </div>
+
     {posts.length === 0 && (
       <p class="text-center opacity-60">No blog posts yet — check back soon!</p>
     )}

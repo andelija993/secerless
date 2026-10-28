@@ -12,13 +12,19 @@ interface FetchResult {
 }
 
 async function adminFetch(path: string, options: RequestInit = {}): Promise<FetchResult> {
-  const res = await fetch(`${API_URL}${path}`, {
-    ...options,
-    credentials: 'include', // send the httpOnly JWT cookie
-    headers: { 'Content-Type': 'application/json', ...(options.headers ?? {}) },
-  });
-  const data = res.status === 204 ? null : await res.json().catch(() => null);
-  return { ok: res.ok, status: res.status, data };
+  try {
+    const res = await fetch(`${API_URL}${path}`, {
+      ...options,
+      credentials: 'include', // send the httpOnly JWT cookie
+      headers: { 'Content-Type': 'application/json', ...(options.headers ?? {}) },
+    });
+    const data = res.status === 204 ? null : await res.json().catch(() => null);
+    return { ok: res.ok, status: res.status, data };
+  } catch (err) {
+    // Network error (backend down, CORS, etc.) — return a normal failure so the UI can show a toast
+    console.error(err);
+    return { ok: false, status: 0, data: { error: 'Cannot reach the server. Is the backend running?' } };
+  }
 }
 
 // --- Admin read endpoints (include drafts) ---

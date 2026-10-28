@@ -29,11 +29,17 @@ export interface RecipeDetail extends RecipeSummary {
 export interface BlogPostSummary {
   id: string;
   title: string;
+  titleSr: string | null;
   slug: string;
   content: string;
+  contentSr: string | null;
   coverImageUrl: string | null;
   publishedAt: string;
   author: { firstName: string | null; lastName: string | null };
+}
+
+export interface TranslationResponse {
+  text: string;
 }
 
 // Generic fetch wrapper — returns `null` instead of throwing so a single
@@ -65,3 +71,41 @@ export async function getPostBySlug(slug: string): Promise<BlogPostSummary | nul
   return apiFetch<BlogPostSummary>(`/blog/${slug}`);
 }
 
+export async function translateText(text: string, sourceLang = 'en', targetLang = 'sr'): Promise<string> {
+  if (!text.trim()) return text;
+  const res = await fetch(`${API_URL}/translate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text, sourceLang, targetLang }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.error || 'Translation failed');
+  }
+
+  const data = (await res.json()) as TranslationResponse;
+  return data.text || text;
+}
+
+export async function translateBlogPost(post: BlogPostSummary) {
+  const title = post.titleSr?.trim() || post.title;
+  const content = post.contentSr?.trim() || post.content;
+
+  if (post.titleSr?.trim() && post.contentSr?.trim()) {
+    return { title, content };
+  }
+
+  try {
+    const combined = `${post.title}\n\n${post.content}`;
+    const translated = await translateText(combined, 'en', 'sr');
+    const [translatedTitle, ...rest] = translated.split('\n\n');
+    return {
+      title: translatedTitle?.trim() || title,
+      content: rest.join('\n\n').trim() || content,
+    };
+  } catch (err) {
+    console.warn('Falling back to original English content for Serbian blog view:', err);
+    return { title, content };
+  }
+}

@@ -11,6 +11,7 @@
 
 import { useEffect, useState } from 'react';
 import { getMe, type AuthUser } from '../lib/auth';
+import { showToast } from '../lib/toast';
 import {
   adminGetAllRecipes,
   adminGetAllPosts,
@@ -38,7 +39,7 @@ export default function AdminDashboard({ lang }: { lang: string }) {
 
   // Modal state
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalTab, setModalTab] = useState<Tab>('recipes'); // which form to show
+  const [modalTab, setModalTab] = useState<Tab>('recipes');
   const [editingRecipe, setEditingRecipe] = useState<any | null>(null);
   const [editingPost, setEditingPost] = useState<any | null>(null);
 
@@ -63,21 +64,27 @@ export default function AdminDashboard({ lang }: { lang: string }) {
     setDataLoading(false);
   }
 
-  // ----- Delete handlers -----
-
   async function handleDeleteRecipe(id: string, title: string) {
     if (!confirm(`Delete recipe "${title}"? This cannot be undone.`)) return;
-    const { ok } = await adminDeleteRecipe(id);
-    if (ok) setRecipes((prev) => prev.filter((r) => r.id !== id));
+    const { ok, data } = await adminDeleteRecipe(id);
+    if (ok) {
+      setRecipes((prev) => prev.filter((r) => r.id !== id));
+      showToast('Recipe deleted');
+    } else {
+      showToast(data?.error || 'Failed to delete recipe', 'error');
+    }
   }
 
   async function handleDeletePost(id: string, title: string) {
     if (!confirm(`Delete post "${title}"? This cannot be undone.`)) return;
-    const { ok } = await adminDeletePost(id);
-    if (ok) setPosts((prev) => prev.filter((p) => p.id !== id));
+    const { ok, data } = await adminDeletePost(id);
+    if (ok) {
+      setPosts((prev) => prev.filter((p) => p.id !== id));
+      showToast('Blog post deleted');
+    } else {
+      showToast(data?.error || 'Failed to delete post', 'error');
+    }
   }
-
-  // ----- Open modal helpers -----
 
   function openNewRecipe() {
     setEditingRecipe(null);
@@ -109,14 +116,15 @@ export default function AdminDashboard({ lang }: { lang: string }) {
     setEditingPost(null);
   }
 
-  // ----- Save handlers (called from form components) -----
-
   async function handleSaveRecipe(data: object) {
     if (editingRecipe) {
       const { ok, data: updated } = await adminUpdateRecipe(editingRecipe.id, data);
       if (ok) {
         setRecipes((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
         closeModal();
+        showToast('Recipe saved successfully');
+      } else {
+        showToast(updated?.error || 'Failed to save recipe', 'error');
       }
       return { ok, error: ok ? undefined : updated?.error };
     } else {
@@ -124,6 +132,9 @@ export default function AdminDashboard({ lang }: { lang: string }) {
       if (ok) {
         setRecipes((prev) => [created, ...prev]);
         closeModal();
+        showToast('Recipe created successfully');
+      } else {
+        showToast(created?.error || 'Failed to create recipe', 'error');
       }
       return { ok, error: ok ? undefined : created?.error };
     }
@@ -135,6 +146,9 @@ export default function AdminDashboard({ lang }: { lang: string }) {
       if (ok) {
         setPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
         closeModal();
+        showToast('Blog post saved successfully');
+      } else {
+        showToast(updated?.error || 'Failed to save post', 'error');
       }
       return { ok, error: ok ? undefined : updated?.error };
     } else {
@@ -142,6 +156,9 @@ export default function AdminDashboard({ lang }: { lang: string }) {
       if (ok) {
         setPosts((prev) => [created, ...prev]);
         closeModal();
+        showToast('Blog post created successfully');
+      } else {
+        showToast(created?.error || 'Failed to create post', 'error');
       }
       return { ok, error: ok ? undefined : created?.error };
     }
@@ -402,4 +419,3 @@ function PostTable({
     </div>
   );
 }
-

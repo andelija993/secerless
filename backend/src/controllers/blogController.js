@@ -33,14 +33,17 @@ export async function getPostBySlug(req, res) {
 // POST /api/blog — create a post (admin only)
 export async function createPost(req, res) {
   try {
-    const { title, slug, content, coverImageUrl } = req.body;
+    const { title, titleSr, slug, content, contentSr, coverImageUrl, published } = req.body;
     const post = await prisma.blogPost.create({
       data: {
         title,
+        titleSr: titleSr ?? null,
         slug,
         content,
+        contentSr: contentSr ?? null,
         coverImageUrl,
-        authorId: req.user.id, // always the logged-in admin
+        published: published ?? true,
+        authorId: req.user.id,
       },
     });
     res.status(201).json(post);
@@ -53,13 +56,15 @@ export async function createPost(req, res) {
 // PUT /api/blog/:id — update a post (admin only)
 export async function updatePost(req, res) {
   try {
-    const { title, slug, content, coverImageUrl, published } = req.body;
+    const { title, titleSr, slug, content, contentSr, coverImageUrl, published } = req.body;
     const post = await prisma.blogPost.update({
       where: { id: req.params.id },
       data: {
         ...(title !== undefined && { title }),
+        ...(titleSr !== undefined && { titleSr: titleSr ?? null }),
         ...(slug !== undefined && { slug }),
         ...(content !== undefined && { content }),
+        ...(contentSr !== undefined && { contentSr: contentSr ?? null }),
         ...(coverImageUrl !== undefined && { coverImageUrl }),
         ...(published !== undefined && { published }),
       },
@@ -81,4 +86,3 @@ export async function deletePost(req, res) {
     res.status(500).json({ error: 'Failed to delete post' });
   }
 }
-

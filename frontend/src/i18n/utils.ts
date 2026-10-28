@@ -19,7 +19,14 @@ export function useTranslations(lang: Lang) {
 /** Builds a path prefixed with the given language (except default 'en', which stays at root) */
 export function useTranslatedPath(lang: Lang) {
   return function translatePath(path: string, targetLang: Lang = lang) {
-    return targetLang === defaultLang ? path : `/${targetLang}${path}`;
+    const normalized = path.startsWith('/') ? path : `/${path}`;
+    const withoutLang = normalized.replace(/^\/sr(?=\/|$)/, '') || '/';
+    const withoutCurrentLang = normalized.replace(/^\/(en|sr)(?=\/|$)/, '') || '/';
+
+    if (targetLang === defaultLang) {
+      return withoutCurrentLang;
+    }
+
+    return `/sr${withoutLang === '/' ? '' : withoutLang}`;
   };
 }
-

@@ -25,13 +25,34 @@ app.use(
     credentials: true, // allow cookies (needed for our JWT-in-cookie auth strategy)
   })
 );
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 app.use(authenticate); // attaches req.user (or null) on every request
 
 // --- Health check (useful to confirm the server is alive) ---
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Šećerless API is running' });
+});
+
+// --- Translation endpoint for blog content ---
+app.post('/api/translate', async (req, res) => {
+  try {
+    const { text, sourceLang = 'en', targetLang = 'sr' } = req.body || {};
+    if (!text || !String(text).trim()) {
+      return res.status(400).json({ error: 'Text is required' });
+    }
+    if (sourceLang === targetLang) {
+      return res.json({ text: String(text).trim() });
+    }
+    return res.json({
+      text: String(text).trim(),
+      warning: 'OpenAI is not configured. The English text was copied into the Serbian fields for manual review.',
+      fallback: true,
+    });
+  } catch (error) {
+    console.error('Translation failed:', error);
+    res.status(500).json({ error: 'Translation failed' });
+  }
 });
 
 // --- Routes ---
@@ -48,4 +69,3 @@ app.use('/api/favorites', favoriteRoutes);
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
-
