@@ -3,6 +3,7 @@
 import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
 import { getRecipes, getPosts } from '../lib/api';
 import TopRecipesSlider from './TopRecipesSlider';
+import { coverFraming, frameCss, DEFAULT_FRAMING } from '../lib/imageFrame';
 
 interface Props {
   lang: Lang;
@@ -13,12 +14,16 @@ const t = useTranslations(lang);
 const translatePath = useTranslatedPath(lang);
 const isSr = lang === 'sr';
 
-const [recipes, posts] = await Promise.all([getRecipes(), getPosts()]);
+const [recipes, posts] = await Promise.all([getRecipes(lang), getPosts()]);
 const topRecipes = recipes.slice(0, 5);
 const latestPosts = posts.slice(0, 3);
 
 const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=900';
-const heroImages = [...recipes.map((r) => r.imageUrl).filter(Boolean), FALLBACK, FALLBACK, FALLBACK].slice(0, 3) as string[];
+// Collage photos keep the framing chosen in the admin
+const heroImages = [
+  ...recipes.filter((r) => r.imageUrl).map((r) => ({ url: r.imageUrl as string, style: frameCss(coverFraming(r)) })),
+  ...Array(3).fill({ url: FALLBACK, style: frameCss(DEFAULT_FRAMING) }),
+].slice(0, 3) as { url: string; style: string }[];
 
 // Unique categories that actually have recipes, with a count
 const emoji: Record<string, string> = {
@@ -95,21 +100,15 @@ const fmtDate = (d: string) =>
 
     <!-- Image collage -->
     <div class="relative h-[420px] sm:h-[500px] reveal" style="--reveal-delay: 150ms">
-      <img
-        src={heroImages[0]}
-        alt=""
-        class="absolute right-0 top-0 h-[78%] w-[68%] rounded-[2.5rem] object-cover shadow-2xl ring-8 ring-base-100"
-      />
-      <img
-        src={heroImages[1]}
-        alt=""
-        class="absolute left-0 bottom-0 h-[52%] w-[48%] rounded-[2rem] object-cover shadow-2xl ring-8 ring-base-100 -rotate-3"
-      />
-      <img
-        src={heroImages[2]}
-        alt=""
-        class="absolute right-[8%] bottom-[2%] h-[30%] w-[30%] rounded-[1.5rem] object-cover shadow-xl ring-8 ring-base-100 rotate-6 hidden sm:block"
-      />
+      <div class="absolute right-0 top-0 h-[78%] w-[68%] overflow-hidden rounded-[2.5rem] shadow-2xl ring-8 ring-base-100">
+        <img src={heroImages[0].url} alt="" class="h-full w-full object-cover" style={heroImages[0].style} />
+      </div>
+      <div class="absolute left-0 bottom-0 h-[52%] w-[48%] overflow-hidden rounded-[2rem] shadow-2xl ring-8 ring-base-100 -rotate-3">
+        <img src={heroImages[1].url} alt="" class="h-full w-full object-cover" style={heroImages[1].style} />
+      </div>
+      <div class="absolute right-[8%] bottom-[2%] h-[30%] w-[30%] overflow-hidden rounded-[1.5rem] shadow-xl ring-8 ring-base-100 rotate-6 hidden sm:block">
+        <img src={heroImages[2].url} alt="" class="h-full w-full object-cover" style={heroImages[2].style} />
+      </div>
       <div class="absolute left-[6%] top-[12%] glass-surface rounded-2xl px-4 py-3 shadow-xl animate-float">
         <p class="text-2xl">🍰</p>
         <p class="text-xs font-semibold mt-1">{isSr ? 'Bez šećera' : 'Sugar-free'}</p>

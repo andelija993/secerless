@@ -6,7 +6,7 @@ export async function getStaticPaths() {
   const recipes = await getRecipes();
   return recipes.map((r) => ({ params: { slug: r.slug } }));
 }
-const recipe = await getRecipeBySlug(Astro.params.slug!);
+const recipe = await getRecipeBySlug(Astro.params.slug!, 'sr');
 if (!recipe) return Astro.redirect('/sr/recipes');
 ---
 <Layout title={`${recipe.title} — Šećerless`}>

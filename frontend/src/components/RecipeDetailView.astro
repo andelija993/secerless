@@ -1,9 +1,11 @@
 ---
 // RecipeDetailView — shared recipe page for EN and SR.
+// The recipe passed in is already localized (see localizeRecipe in lib/api.ts).
 import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
 import type { RecipeDetail } from '../lib/api';
 import FavoriteButton from './FavoriteButton';
-import RecipeGallery from './RecipeGallery';
+import RecipeHeroSlider from './RecipeHeroSlider';
+import { coverFraming, galleryFraming } from '../lib/imageFrame';
 
 interface Props {
   recipe: RecipeDetail;
@@ -18,8 +20,20 @@ const isSr = lang === 'sr';
 const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1200';
 const authorName = [recipe.author?.firstName, recipe.author?.lastName].filter(Boolean).join(' ');
 const txt = isSr
-  ? { back: '← Svi recepti', items: 'sastojaka', steps: 'koraka', tick: 'Štikliraj sastojke dok kuvaš', by: 'Autor', gallery: 'Galerija' }
-  : { back: '← All recipes', items: 'ingredients', steps: 'steps', tick: 'Tick ingredients off as you cook', by: 'By', gallery: 'Gallery' };
+  ? { back: '← Svi recepti', items: 'sastojaka', steps: 'koraka', tick: 'Štikliraj sastojke dok kuvaš', by: 'Autor', gallery: 'Galerija', video: 'Pogledaj video', videoTitle: 'Video recept' }
+  : { back: '← All recipes', items: 'ingredients', steps: 'steps', tick: 'Tick ingredients off as you cook', by: 'By', gallery: 'Gallery', video: 'Watch the video', videoTitle: 'Video recipe' };
+
+// Lines starting with "## " are section headings (e.g. "## For the crust")
+const isHeading = (text: string) => text.startsWith('## ');
+const headingText = (text: string) => text.replace(/^##\s*/, '');
+const ingredientCount = recipe.ingredients.filter((i) => !isHeading(i.text)).length;
+const stepItems = recipe.steps.filter((s) => !isHeading(s.text));
+
+// Hero slider: cover photo first, then the gallery photos
+const slides = [
+  { url: recipe.imageUrl ?? FALLBACK, alt: recipe.title, frame: coverFraming(recipe) },
+  ...(recipe.images ?? []).map((img, i) => ({ url: img.url, alt: img.caption ?? `${recipe.title} ${i + 2}`, frame: galleryFraming(img) })),
+];
 ---
 
 <article>
@@ -44,11 +58,16 @@ const txt = isSr
             <span class="text-sm font-medium">{t('recipes.save').replace('❤️ ', '')}</span>
           </div>
           <span class="rounded-full border border-base-300 bg-base-100 px-4 py-2 text-sm">
-            🧺 {recipe.ingredients.length} {txt.items}
+            🧺 {ingredientCount} {txt.items}
           </span>
           <span class="rounded-full border border-base-300 bg-base-100 px-4 py-2 text-sm">
-            👩‍🍳 {recipe.steps.length} {txt.steps}
+            👩‍🍳 {stepItems.length} {txt.steps}
           </span>
+          {recipe.videoUrl && (
+            <a href="#video" class="rounded-full bg-primary text-primary-content px-4 py-2 text-sm font-semibold shadow-md shadow-primary/30 hover:scale-105 transition-transform">
+              ▶ {txt.video}
+            </a>
+          )}
         </div>
         {authorName && <p class="mt-6 text-sm opacity-60">{txt.by} {authorName}</p>}
       </div>
@@ -56,23 +75,11 @@ const txt = isSr
       <div class="reveal order-1 lg:order-2" style="--reveal-delay: 120ms">
         <div class="relative">
           <div class="absolute -inset-3 rounded-[2.75rem] bg-gradient-to-br from-primary/30 via-secondary/30 to-accent/30 blur-2xl"></div>
-          <img
-            src={recipe.imageUrl ?? FALLBACK}
-            alt={recipe.title}
-            class="relative aspect-square w-full rounded-[2.5rem] object-cover shadow-2xl"
-          />
+          <RecipeHeroSlider slides={slides} client:load />
         </div>
       </div>
     </div>
   </section>
-
-  <!-- Gallery -->
-  {recipe.images?.length > 0 && (
-    <section class="max-w-4xl mx-auto px-4 pb-14 reveal">
-      <h2 class="text-2xl font-semibold mb-5">{txt.gallery}</h2>
-      <RecipeGallery images={recipe.images} client:visible />
-    </section>
-  )}
 
   <!-- Ingredients + steps -->
   <section class="max-w-6xl mx-auto px-4 grid gap-10 lg:grid-cols-[0.85fr_1.15fr] items-start">
@@ -80,21 +87,27 @@ const txt = isSr
       <h2 class="text-2xl font-semibold">{t('recipes.ingredients')}</h2>
       <p class="mt-1 text-xs opacity-60">{txt.tick}</p>
       <ul class="mt-5 space-y-1">
-        {recipe.ingredients.map((i) => (
-          <li>
-            <label class="ingredient flex cursor-pointer items-start gap-3 rounded-xl px-2 py-2 hover:bg-base-100 transition-colors">
-              <input type="checkbox" class="checkbox checkbox-primary checkbox-sm mt-0.5" />
-              <span>{i.text}</span>
-            </label>
-          </li>
-        ))}
+        {recipe.ingredients.map((i) =>
+          isHeading(i.text) ? (
+            <li class="pt-4 pb-1 px-2 text-xs font-bold uppercase tracking-wider text-primary first:pt-0">
+              {headingText(i.text)}
+            </li>
+          ) : (
+            <li>
+              <label class="ingredient flex cursor-pointer items-start gap-3 rounded-xl px-2 py-2 hover:bg-base-100 transition-colors">
+                <input type="checkbox" class="checkbox checkbox-primary checkbox-sm mt-0.5" />
+                <span>{i.text}</span>
+              </label>
+            </li>
+          )
+        )}
       </ul>
     </aside>
 
     <div class="reveal" style="--reveal-delay: 100ms">
       <h2 class="text-2xl font-semibold mb-6">{t('recipes.steps')}</h2>
       <ol class="space-y-5">
-        {recipe.steps.map((s, idx) => (
+        {stepItems.map((s, idx) => (
           <li class="flex gap-5 rounded-[1.5rem] border border-base-300 bg-base-100 p-5 md:p-6 hover:border-primary/40 transition-colors">
             <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-content font-display text-lg font-semibold shadow-md shadow-primary/30">
               {idx + 1}
@@ -105,6 +118,27 @@ const txt = isSr
       </ol>
     </div>
   </section>
+
+  <!-- Video (e.g. imported Instagram reel) -->
+  {recipe.videoUrl && (
+    <section id="video" class="scroll-mt-28 max-w-6xl mx-auto px-4 pt-20 reveal">
+      <div class="rounded-[2.5rem] bg-base-200 p-6 md:p-10 grid gap-8 md:grid-cols-[1fr_auto] items-center">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-primary">🎬 {txt.videoTitle}</span>
+          <h2 class="mt-3 text-3xl md:text-4xl font-semibold leading-tight">{recipe.title}</h2>
+          {recipe.description && <p class="mt-4 opacity-70 leading-relaxed max-w-md">{recipe.description}</p>}
+        </div>
+        <video
+          src={recipe.videoUrl}
+          poster={recipe.imageUrl ?? undefined}
+          controls
+          playsinline
+          preload="none"
+          class="mx-auto w-full max-w-[22rem] aspect-[9/16] rounded-[2rem] bg-black object-cover shadow-2xl"
+        ></video>
+      </div>
+    </section>
+  )}
 </article>
 
 <style>

@@ -22,7 +22,12 @@ import {
   adminCreatePost,
   adminUpdatePost,
   adminDeletePost,
+  adminBulkRecipes,
+  adminBulkPosts,
+  type BulkAction,
 } from '../lib/admin';
+import AdminTable, { type AdminRow } from './AdminTable';
+import { coverFraming, frameStyle } from '../lib/imageFrame';
 import RecipeForm from './RecipeForm';
 import BlogForm from './BlogForm';
 
@@ -85,6 +90,48 @@ export default function AdminDashboard({ lang }: { lang: string }) {
       showToast(data?.error || 'Failed to delete post', 'error');
     }
   }
+
+  async function handleBulk(kind: Tab, ids: string[], action: BulkAction): Promise<boolean> {
+    const what = kind === 'recipes' ? (ids.length === 1 ? 'recipe' : 'recipes') : ids.length === 1 ? 'post' : 'posts';
+    if (action === 'delete' && !confirm(`Delete ${ids.length} ${what}? This cannot be undone.`)) return false;
+    const { ok, data } = kind === 'recipes' ? await adminBulkRecipes(ids, action) : await adminBulkPosts(ids, action);
+    if (!ok) {
+      showToast(data?.error || 'Bulk action failed', 'error');
+      return false;
+    }
+    const idSet = new Set(ids);
+    const apply = (list: any[]) =>
+      action === 'delete'
+        ? list.filter((x) => !idSet.has(x.id))
+        : list.map((x) => (idSet.has(x.id) ? { ...x, published: action === 'publish' } : x));
+    if (kind === 'recipes') setRecipes(apply);
+    else setPosts(apply);
+    const verb = action === 'delete' ? 'deleted' : action === 'publish' ? 'published' : 'moved to drafts';
+    showToast(`${data?.count ?? ids.length} ${what} ${verb}`);
+    return true;
+  }
+
+  const recipeRows: AdminRow[] = recipes.map((r) => ({
+    id: r.id,
+    title: r.title,
+    slug: r.slug,
+    image: r.imageUrl,
+    imageStyle: frameStyle(coverFraming(r)),
+    date: r.createdAt,
+    published: r.published,
+    category: r.category?.name ?? null,
+    meta: `${r.ingredients?.filter((i: any) => !i.text?.startsWith('## ')).length ?? 0} ingredients${r.videoUrl ? ' · ▶ video' : ''}`,
+  }));
+
+  const postRows: AdminRow[] = posts.map((p) => ({
+    id: p.id,
+    title: p.title,
+    slug: p.slug,
+    image: p.coverImageUrl,
+    date: p.publishedAt ?? p.createdAt,
+    published: p.published,
+    meta: p.titleSr ? 'EN + SR' : 'EN only',
+  }));
 
   function openNewRecipe() {
     setEditingRecipe(null);
@@ -192,7 +239,7 @@ export default function AdminDashboard({ lang }: { lang: string }) {
   // ----- Render: dashboard -----
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-12">
+    <div className="max-w-6xl mx-auto px-4 py-12">
       {/* Header */}
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <div>
@@ -233,16 +280,23 @@ export default function AdminDashboard({ lang }: { lang: string }) {
           <span className="loading loading-spinner loading-lg text-primary" />
         </div>
       ) : tab === 'recipes' ? (
-        <RecipeTable
-          recipes={recipes}
-          onEdit={openEditRecipe}
+        <AdminTable
+          key="recipes"
+          rows={recipeRows}
+          noun={{ one: 'recipe', many: 'recipes', emoji: '🍴' }}
+          showCategory
+          onEdit={(id) => openEditRecipe(recipes.find((r) => r.id === id))}
           onDelete={handleDeleteRecipe}
+          onBulk={(ids, action) => handleBulk('recipes', ids, action)}
         />
       ) : (
-        <PostTable
-          posts={posts}
-          onEdit={openEditPost}
+        <AdminTable
+          key="posts"
+          rows={postRows}
+          noun={{ one: 'post', many: 'posts', emoji: '📝' }}
+          onEdit={(id) => openEditPost(posts.find((p) => p.id === id))}
           onDelete={handleDeletePost}
+          onBulk={(ids, action) => handleBulk('blog', ids, action)}
         />
       )}
 
@@ -276,146 +330,6 @@ export default function AdminDashboard({ lang }: { lang: string }) {
           <div className="modal-backdrop bg-black/40" onClick={closeModal} />
         </div>
       )}
-    </div>
-  );
-}
-
-// ----- Sub-components for the tables -----
-
-function StatusBadge({ published }: { published: boolean }) {
-  return (
-    <span className={`badge badge-sm ${published ? 'badge-success' : 'badge-warning'}`}>
-      {published ? 'Published' : 'Draft'}
-    </span>
-  );
-}
-
-function RecipeTable({
-  recipes,
-  onEdit,
-  onDelete,
-}: {
-  recipes: any[];
-  onEdit: (r: any) => void;
-  onDelete: (id: string, title: string) => void;
-}) {
-  if (!recipes.length) {
-    return (
-      <div className="text-center py-16 opacity-60">
-        <p className="text-lg">No recipes yet.</p>
-        <p className="text-sm">Click "+ New Recipe" to add the first one.</p>
-      </div>
-    );
-  }
-  return (
-    <div className="overflow-x-auto rounded-box border border-base-300">
-      <table className="table table-zebra w-full">
-        <thead>
-          <tr>
-            <th>Recipe</th>
-            <th>Category</th>
-            <th>Ingredients</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {recipes.map((r) => (
-            <tr key={r.id}>
-              <td>
-                <div className="flex items-center gap-3 min-w-0">
-                  {r.imageUrl ? (
-                    <img src={r.imageUrl} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-lg bg-base-300 flex items-center justify-center flex-shrink-0 text-xl">🍴</div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{r.title}</p>
-                    <p className="text-xs opacity-50 font-mono truncate">{r.slug}</p>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span className="badge badge-ghost badge-sm">{r.category?.name ?? '—'}</span>
-              </td>
-              <td>
-                <span className="text-sm opacity-70">{r.ingredients?.length ?? 0} items</span>
-              </td>
-              <td><StatusBadge published={r.published} /></td>
-              <td>
-                <div className="flex gap-1">
-                  <button onClick={() => onEdit(r)} className="btn btn-xs btn-outline">Edit</button>
-                  <button onClick={() => onDelete(r.id, r.title)} className="btn btn-xs btn-error btn-outline">Delete</button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-function PostTable({
-  posts,
-  onEdit,
-  onDelete,
-}: {
-  posts: any[];
-  onEdit: (p: any) => void;
-  onDelete: (id: string, title: string) => void;
-}) {
-  if (!posts.length) {
-    return (
-      <div className="text-center py-16 opacity-60">
-        <p className="text-lg">No blog posts yet.</p>
-        <p className="text-sm">Click "+ New Post" to add the first one.</p>
-      </div>
-    );
-  }
-  return (
-    <div className="overflow-x-auto rounded-box border border-base-300">
-      <table className="table table-zebra w-full">
-        <thead>
-          <tr>
-            <th>Post</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {posts.map((p) => (
-            <tr key={p.id}>
-              <td>
-                <div className="flex items-center gap-3 min-w-0">
-                  {p.coverImageUrl ? (
-                    <img src={p.coverImageUrl} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-lg bg-base-300 flex items-center justify-center flex-shrink-0 text-xl">📝</div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="font-medium truncate">{p.title}</p>
-                    <p className="text-xs opacity-50 font-mono truncate">{p.slug}</p>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <span className="text-sm opacity-60">
-                  {new Date(p.publishedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                </span>
-              </td>
-              <td><StatusBadge published={p.published} /></td>
-              <td>
-                <div className="flex gap-1">
-                  <button onClick={() => onEdit(p)} className="btn btn-xs btn-outline">Edit</button>
-                  <button onClick={() => onDelete(p.id, p.title)} className="btn btn-xs btn-error btn-outline">Delete</button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
     </div>
   );
 }

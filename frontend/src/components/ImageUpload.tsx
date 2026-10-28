@@ -11,9 +11,13 @@ interface Props {
   value: string;
   /** Called once the upload completes successfully with the Cloudinary secure URL. */
   onUpload: (url: string) => void;
+  /** Heading above the drop zone. */
+  label?: string;
+  /** Small explanation under the heading. */
+  hint?: string;
 }
 
-export default function ImageUpload({ value, onUpload }: Props) {
+export default function ImageUpload({ value, onUpload, label = 'Cover Image', hint }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -64,7 +68,8 @@ export default function ImageUpload({ value, onUpload }: Props) {
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="label-text font-semibold">Cover Image</span>
+      <span className="label-text font-semibold">{label}</span>
+      {hint && <span className="text-xs opacity-60 -mt-1">{hint}</span>}
 
       {/* Drop zone */}
       <div
@@ -79,14 +84,12 @@ export default function ImageUpload({ value, onUpload }: Props) {
             <span className="text-sm opacity-60">Uploading…</span>
           </div>
         ) : value ? (
-          <div className="relative group">
-            <img
-              src={value}
-              alt="Cover preview"
-              className="h-40 w-full object-cover rounded-lg"
-            />
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-              <span className="text-white text-sm font-medium">Click or drop to replace</span>
+          <div className="flex items-center gap-4 text-left">
+            <img src={value} alt="Current photo" className="h-20 w-20 shrink-0 rounded-lg object-cover" />
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-medium">✓ Photo uploaded</span>
+              <span className="text-xs opacity-60">Click here or drop a new file to replace it</span>
+              <span className="btn btn-xs btn-outline btn-primary w-fit mt-1">Replace photo</span>
             </div>
           </div>
         ) : (

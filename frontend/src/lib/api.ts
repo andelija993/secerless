@@ -4,6 +4,8 @@
 
 export const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:4000/api';
 
+type Lang = 'en' | 'sr';
+
 export interface Category {
   id: string;
   name: string;
@@ -13,16 +15,30 @@ export interface Category {
 export interface RecipeSummary {
   id: string;
   title: string;
+  titleSr?: string | null;
   slug: string;
   description: string | null;
+  descriptionSr?: string | null;
   imageUrl: string | null;
+  imagePosX?: number;
+  imagePosY?: number;
+  imageZoom?: number;
+  videoUrl?: string | null;
+  createdAt?: string;
   category: Category | null;
 }
 
+export interface RecipeLine {
+  id: string;
+  text: string;
+  textSr?: string | null;
+  order: number;
+}
+
 export interface RecipeDetail extends RecipeSummary {
-  ingredients: { id: string; text: string; order: number }[];
-  steps: { id: string; text: string; order: number }[];
-  images: { id: string; url: string; caption: string | null; order: number }[];
+  ingredients: RecipeLine[];
+  steps: RecipeLine[];
+  images: { id: string; url: string; caption: string | null; order: number; posX?: number; posY?: number; zoom?: number }[];
   author: { firstName: string | null; lastName: string | null };
 }
 
@@ -38,10 +54,6 @@ export interface BlogPostSummary {
   author: { firstName: string | null; lastName: string | null };
 }
 
-export interface TranslationResponse {
-  text: string;
-}
-
 // Generic fetch wrapper — returns `null` instead of throwing so a single
 // backend hiccup doesn't crash the whole page (we just show an empty state).
 async function apiFetch<T>(path: string): Promise<T | null> {
@@ -55,12 +67,31 @@ async function apiFetch<T>(path: string): Promise<T | null> {
   }
 }
 
-export async function getRecipes(): Promise<RecipeSummary[]> {
-  return (await apiFetch<RecipeSummary[]>('/recipes')) ?? [];
+const pick = (sr: string | null | undefined, en: string) => (sr && sr.trim() ? sr : en);
+
+// Swap in the Serbian fields (when present) so components can always read
+// `title`, `description`, `text` regardless of language. English is the fallback.
+export function localizeRecipe<T extends RecipeSummary>(recipe: T, lang: Lang): T {
+  if (lang !== 'sr') return recipe;
+  const r: any = {
+    ...recipe,
+    title: pick(recipe.titleSr, recipe.title),
+    description: recipe.descriptionSr?.trim() ? recipe.descriptionSr : recipe.description,
+  };
+  const lines = (list?: RecipeLine[]) => list?.map((l) => ({ ...l, text: pick(l.textSr, l.text) }));
+  if ('ingredients' in recipe) r.ingredients = lines((recipe as any).ingredients);
+  if ('steps' in recipe) r.steps = lines((recipe as any).steps);
+  return r as T;
 }
 
-export async function getRecipeBySlug(slug: string): Promise<RecipeDetail | null> {
-  return apiFetch<RecipeDetail>(`/recipes/${slug}`);
+export async function getRecipes(lang: Lang = 'en'): Promise<RecipeSummary[]> {
+  const list = (await apiFetch<RecipeSummary[]>('/recipes')) ?? [];
+  return list.map((r) => localizeRecipe(r, lang));
+}
+
+export async function getRecipeBySlug(slug: string, lang: Lang = 'en'): Promise<RecipeDetail | null> {
+  const r = await apiFetch<RecipeDetail>(`/recipes/${slug}`);
+  return r ? localizeRecipe(r, lang) : null;
 }
 
 export async function getPosts(): Promise<BlogPostSummary[]> {
@@ -71,41 +102,3 @@ export async function getPostBySlug(slug: string): Promise<BlogPostSummary | nul
   return apiFetch<BlogPostSummary>(`/blog/${slug}`);
 }
 
-export async function translateText(text: string, sourceLang = 'en', targetLang = 'sr'): Promise<string> {
-  if (!text.trim()) return text;
-  const res = await fetch(`${API_URL}/translate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, sourceLang, targetLang }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => null);
-    throw new Error(err?.error || 'Translation failed');
-  }
-
-  const data = (await res.json()) as TranslationResponse;
-  return data.text || text;
-}
-
-export async function translateBlogPost(post: BlogPostSummary) {
-  const title = post.titleSr?.trim() || post.title;
-  const content = post.contentSr?.trim() || post.content;
-
-  if (post.titleSr?.trim() && post.contentSr?.trim()) {
-    return { title, content };
-  }
-
-  try {
-    const combined = `${post.title}\n\n${post.content}`;
-    const translated = await translateText(combined, 'en', 'sr');
-    const [translatedTitle, ...rest] = translated.split('\n\n');
-    return {
-      title: translatedTitle?.trim() || title,
-      content: rest.join('\n\n').trim() || content,
-    };
-  } catch (err) {
-    console.warn('Falling back to original English content for Serbian blog view:', err);
-    return { title, content };
-  }
-}

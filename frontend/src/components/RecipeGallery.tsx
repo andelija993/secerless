@@ -2,10 +2,14 @@
 // Rendered as a client:load React island on the recipe detail page.
 
 import { useState } from 'react';
+import { frameStyle, galleryFraming } from '../lib/imageFrame';
 
 interface GalleryImage {
   url: string;
   caption?: string | null;
+  posX?: number;
+  posY?: number;
+  zoom?: number;
 }
 
 interface Props {
@@ -29,6 +33,7 @@ export default function RecipeGallery({ images }: Props) {
           src={images[current].url}
           alt={images[current].caption ?? `Photo ${current + 1}`}
           className="w-full aspect-square object-cover transition-opacity duration-300"
+          style={frameStyle(galleryFraming(images[current]))}
         />
 
         {/* Gradient overlay so arrows are visible on bright photos */}
@@ -84,7 +89,7 @@ export default function RecipeGallery({ images }: Props) {
               }`}
               aria-label={`Go to photo ${i + 1}`}
             >
-              <img src={img.url} alt={`Thumbnail ${i + 1}`} className="h-16 w-16 object-cover" />
+              <img src={img.url} alt={`Thumbnail ${i + 1}`} className="h-16 w-16 object-cover" style={frameStyle(galleryFraming(img))} />
             </button>
           ))}
         </div>

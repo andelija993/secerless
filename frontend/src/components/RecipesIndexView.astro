@@ -3,6 +3,7 @@
 import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
 import { getRecipes } from '../lib/api';
 import FavoriteButton from './FavoriteButton';
+import { coverFraming, frameCss } from '../lib/imageFrame';
 
 interface Props {
   lang: Lang;
@@ -12,7 +13,7 @@ const { lang } = Astro.props;
 const t = useTranslations(lang);
 const translatePath = useTranslatedPath(lang);
 
-const recipes = await getRecipes();
+const recipes = await getRecipes(lang);
 
 const categories = [
   ...new Map(recipes.filter((r) => r.category).map((r) => [r.category!.slug, r.category!])).values(),
@@ -52,12 +53,18 @@ const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w
               src={r.imageUrl ?? FALLBACK}
               alt={r.title}
               loading="lazy"
-              class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+              class="h-full w-full object-cover transition-[scale] duration-700 group-hover:scale-110"
+              style={frameCss(coverFraming(r))}
             />
             <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             {r.category && (
               <span class="absolute left-4 top-4 rounded-full glass-surface px-3 py-1 text-xs font-semibold">
                 {r.category.name}
+              </span>
+            )}
+            {r.videoUrl && (
+              <span class="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-content text-xs shadow-lg" title="Video">
+                ▶
               </span>
             )}
           </figure>
