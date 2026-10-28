@@ -132,6 +132,15 @@ function isActive(href: string) {
 </style>
 
 <script is:inline>
+  // Keep the current filters/page (?category=…&page=…) when switching language
+  document.querySelectorAll('a[hreflang]').forEach((a) => {
+    a.addEventListener('click', () => {
+      a.href = a.getAttribute('href').split(/[?#]/)[0] + location.search + location.hash;
+    });
+  });
+</script>
+
+<script is:inline>
   (() => {
     const KEY = 'secerless_theme';
     const btn = document.getElementById('theme-toggle');
