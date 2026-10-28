@@ -19,6 +19,10 @@ import { v2 as cloudinary } from 'cloudinary';
 import posts from './recipes-posts.mjs';
 import reels1 from './recipes-reels-1.mjs';
 import reels2 from './recipes-reels-2.mjs';
+// 2nd export (older posts, archived posts and reels from 2021–2023)
+import archive1 from './recipes-archive-1.mjs';
+import archive2 from './recipes-archive-2.mjs';
+import archive3 from './recipes-archive-3.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -36,17 +40,23 @@ const ONLY = args.only ? new Set(String(args.only).split(',')) : null;
 const EXPORT_DIR = args.export || '/tmp/ig_export';
 const ADMIN_EMAIL = args.admin || 'admin@secerless.dev';
 
-const media = JSON.parse(fs.readFileSync(path.join(__dirname, 'media.json'), 'utf8'));
-const recipes = [...posts, ...reels1, ...reels2].filter((r) => !ONLY || ONLY.has(r.ig));
+const readJson = (f) => JSON.parse(fs.readFileSync(path.join(__dirname, f), 'utf8'));
+// media2.json entries carry their own export `dir`
+const media = { ...readJson('media.json'), ...readJson('media2.json') };
+const recipes = [...posts, ...reels1, ...reels2, ...archive1, ...archive2, ...archive3].filter((r) => !ONLY || ONLY.has(r.ig));
 
 const split = (pairs) => ({ en: pairs.map((p) => p[0]), sr: pairs.map((p) => p[1]) });
 
 function mediaFor(r) {
   const own = media[r.ig];
   if (!own) throw new Error(`No media entry for ${r.ig}`);
-  const images = own.images.map((p) => path.join(EXPORT_DIR, p));
-  const extra = r.extraVideo ? media[r.extraVideo]?.videos ?? [] : [];
-  const videos = [...own.videos, ...extra].map((p) => path.join(EXPORT_DIR, p));
+  const dirOf = (m) => m?.dir ?? EXPORT_DIR;
+  const images = own.images.map((p) => path.join(dirOf(own), p));
+  const extraMedia = r.extraVideo ? media[r.extraVideo] : null;
+  const videos = [
+    ...own.videos.map((p) => path.join(dirOf(own), p)),
+    ...(extraMedia?.videos ?? []).map((p) => path.join(dirOf(extraMedia), p)),
+  ];
   return { date: own.date, images, video: videos[0] || null };
 }
 
@@ -79,7 +89,7 @@ if (problems) process.exit(1);
 if (DRY) {
   for (const r of recipes) {
     const m = mediaFor(r);
-    console.log(`  ${r.ig.padEnd(8)} ${m.date}  ${r.cat.padEnd(9)} img:${m.images.length} vid:${m.video ? 1 : 0}  ${r.title[0]}`);
+    console.log(`  ${r.ig.padEnd(9)} ${m.date}  ${r.cat.padEnd(9)} img:${m.images.length} vid:${m.video ? 1 : 0}  ${r.title[0]}`);
   }
   process.exit(0);
 }
