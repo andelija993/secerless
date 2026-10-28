@@ -75,7 +75,7 @@ export async function adminDeletePost(id: string): Promise<FetchResult> {
 
 // --- Bulk actions (selected rows in the admin tables) ---
 
-export type BulkAction = 'publish' | 'unpublish' | 'delete';
+export type BulkAction = 'publish' | 'unpublish' | 'delete' | 'feature' | 'unfeature';
 
 export async function adminBulkRecipes(ids: string[], action: BulkAction): Promise<FetchResult> {
   return adminFetch('/admin/recipes/bulk', { method: 'POST', body: JSON.stringify({ ids, action }) });
@@ -83,4 +83,9 @@ export async function adminBulkRecipes(ids: string[], action: BulkAction): Promi
 
 export async function adminBulkPosts(ids: string[], action: BulkAction): Promise<FetchResult> {
   return adminFetch('/admin/posts/bulk', { method: 'POST', body: JSON.stringify({ ids, action }) });
+}
+
+/** Save the manual recipe order (ids from first to last). */
+export async function adminReorderRecipes(ids: string[]): Promise<FetchResult> {
+  return adminFetch('/admin/recipes/order', { method: 'PUT', body: JSON.stringify({ ids }) });
 }

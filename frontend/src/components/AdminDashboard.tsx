@@ -24,6 +24,7 @@ import {
   adminDeletePost,
   adminBulkRecipes,
   adminBulkPosts,
+  adminReorderRecipes,
   type BulkAction,
 } from '../lib/admin';
 import AdminTable, { type AdminRow } from './AdminTable';
@@ -100,14 +101,48 @@ export default function AdminDashboard({ lang }: { lang: string }) {
       return false;
     }
     const idSet = new Set(ids);
+    const patchFor = (): Record<string, boolean> =>
+      action === 'feature' || action === 'unfeature'
+        ? { featured: action === 'feature' }
+        : { published: action === 'publish' };
     const apply = (list: any[]) =>
       action === 'delete'
         ? list.filter((x) => !idSet.has(x.id))
-        : list.map((x) => (idSet.has(x.id) ? { ...x, published: action === 'publish' } : x));
+        : list.map((x) => (idSet.has(x.id) ? { ...x, ...patchFor() } : x));
     if (kind === 'recipes') setRecipes(apply);
     else setPosts(apply);
-    const verb = action === 'delete' ? 'deleted' : action === 'publish' ? 'published' : 'moved to drafts';
+    const verb = {
+      delete: 'deleted',
+      publish: 'published',
+      unpublish: 'moved to drafts',
+      feature: 'added to the homepage',
+      unfeature: 'removed from the homepage',
+    }[action];
     showToast(`${data?.count ?? ids.length} ${what} ${verb}`);
+    return true;
+  }
+
+  async function handleToggleFeatured(id: string, featured: boolean) {
+    const { ok, data } = await adminUpdateRecipe(id, { featured });
+    if (!ok) {
+      showToast(data?.error || 'Failed to update recipe', 'error');
+      return;
+    }
+    setRecipes((prev) => prev.map((r) => (r.id === id ? { ...r, featured } : r)));
+    showToast(featured ? '⭐ Shown on the homepage' : 'Removed from the homepage');
+  }
+
+  async function handleReorder(ids: string[]): Promise<boolean> {
+    const { ok, data } = await adminReorderRecipes(ids);
+    if (!ok) {
+      showToast(data?.error || 'Failed to save the order', 'error');
+      return false;
+    }
+    const pos = new Map(ids.map((id, i) => [id, i + 1]));
+    setRecipes((prev) =>
+      prev.map((r) => ({ ...r, position: pos.get(r.id) ?? r.position })).sort((x, y) => x.position - y.position)
+    );
+    showToast('Recipe order saved');
     return true;
   }
 
@@ -119,6 +154,7 @@ export default function AdminDashboard({ lang }: { lang: string }) {
     imageStyle: frameStyle(coverFraming(r)),
     date: r.createdAt,
     published: r.published,
+    featured: r.featured,
     category: r.category?.name ?? null,
     meta: `${r.ingredients?.filter((i: any) => !i.text?.startsWith('## ')).length ?? 0} ingredients${r.videoUrl ? ' · ▶ video' : ''}`,
   }));
@@ -288,6 +324,8 @@ export default function AdminDashboard({ lang }: { lang: string }) {
           onEdit={(id) => openEditRecipe(recipes.find((r) => r.id === id))}
           onDelete={handleDeleteRecipe}
           onBulk={(ids, action) => handleBulk('recipes', ids, action)}
+          onToggleFeatured={handleToggleFeatured}
+          onReorder={handleReorder}
         />
       ) : (
         <AdminTable

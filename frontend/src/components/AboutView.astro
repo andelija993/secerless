@@ -1,0 +1,115 @@
+---
+// AboutView — shared About page for EN (/about) and SR (/sr/about).
+import { useTranslatedPath, type Lang } from '../i18n/utils';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const translatePath = useTranslatedPath(lang);
+const isSr = lang === 'sr';
+
+const content = {
+  sr: {
+    eyebrow: 'O meni',
+    title: 'Zdravo, ja sam',
+    name: 'Anđelija!',
+    lead: 'Volim dobru hranu, isprobavanje novih recepata i one male trenutke kada od nekoliko običnih sastojaka nastane nešto baš dobro.',
+    paragraphs: [
+      'Šećerless je počeo kao mesto za deserte bez belog šećera, iz želje da pokažem da i zdravije varijante mogu da budu jednako ukusne. Vremenom se moja ljubav prema kuvanju proširila i na sve ostalo – od brzih obroka i ideja za svakodnevni ručak, do porodičnih recepata, omiljenih klasika i ponekog eksperimenta u kuhinji.',
+      'Ovde nećete pronaći komplikovane recepte koji zahtevaju pola dana i sastojke koje je nemoguće pronaći. Više volim jednostavna jela, dobre kombinacije i recepte koji zaista mogu da se uklope u svakodnevni život.',
+    ],
+    quote: 'Ideja je jednostavna – da na jednom mestu sačuvam sve ono što volim da spremam, uz recepte, mere, male trikove i poneku priču iz kuhinje.',
+    closing: 'Drago mi je što ste ovde. Nadam se da ćete pronaći nešto što ćete poželeti da isprobate!',
+    signature: 'Anđelija',
+    values: [
+      { icon: '🍓', title: 'Bez belog šećera', text: 'Deserti koji su zdraviji, a jednako ukusni.' },
+      { icon: '⏱️', title: 'Jednostavno', text: 'Brzi obroci i sastojci koje lako nalazite.' },
+      { icon: '🏡', title: 'Iz moje kuhinje', text: 'Porodični recepti, klasici i poneki eksperiment.' },
+    ],
+    ctaRecipes: 'Pogledaj recepte',
+    ctaContact: 'Piši mi',
+    pageTitle: 'O meni — Šećerless',
+  },
+  en: {
+    eyebrow: 'About me',
+    title: "Hi, I'm",
+    name: 'Anđelija!',
+    lead: 'I love good food, trying out new recipes, and those little moments when a few ordinary ingredients turn into something really good.',
+    paragraphs: [
+      'Šećerless started as a place for desserts without white sugar, out of a wish to show that healthier versions can be just as delicious. Over time, my love for cooking spread to everything else – from quick meals and everyday lunch ideas to family recipes, favourite classics and the occasional kitchen experiment.',
+      "You won't find complicated recipes here that take half a day and call for ingredients that are impossible to find. I prefer simple dishes, good combinations and recipes that can genuinely fit into everyday life.",
+    ],
+    quote: 'The idea is simple – to keep everything I love to cook in one place, with recipes, measurements, little tricks and the occasional story from the kitchen.',
+    closing: "I'm so glad you're here. I hope you'll find something you'll want to try!",
+    signature: 'Anđelija',
+    values: [
+      { icon: '🍓', title: 'No white sugar', text: 'Desserts that are healthier, yet just as delicious.' },
+      { icon: '⏱️', title: 'Simple', text: 'Quick meals and ingredients you can easily find.' },
+      { icon: '🏡', title: 'From my kitchen', text: 'Family recipes, classics and the odd experiment.' },
+    ],
+    pageTitle: 'About Me — Šećerless',
+  },
+}[isSr ? 'sr' : 'en'];
+
+// Portrait — set to e.g. '/about/andjelija.jpg' (placed in frontend/public/about/) once available.
+const portrait: string | null = null;
+
+---
+
+<!-- Intro -->
+<section class="max-w-4xl mx-auto px-4 pt-12 md:pt-20 pb-4">
+  <div class="reveal flex flex-col items-center gap-10 text-center md:flex-row md:items-center md:text-left">
+    <div class="shrink-0 h-48 w-48 md:h-60 md:w-60 overflow-hidden rounded-full ring-8 ring-base-200 shadow-xl bg-base-200 flex items-center justify-center">
+      {portrait ? (
+        <img src={portrait} alt={content.signature} class="h-full w-full object-cover" />
+      ) : (
+        <span class="text-7xl" aria-hidden="true">👩‍🍳</span>
+      )}
+    </div>
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-[0.2em] text-primary">{content.eyebrow}</p>
+      <h1 class="mt-3 text-4xl sm:text-5xl font-semibold leading-tight">
+        {content.title} <span class="text-gradient italic">{content.name}</span>
+      </h1>
+      <p class="mt-5 text-xl leading-relaxed opacity-80">{content.lead}</p>
+    </div>
+  </div>
+</section>
+
+<!-- Story -->
+<section class="max-w-3xl mx-auto px-4 py-12 md:py-16">
+  <div class="space-y-6 text-lg leading-[1.85] opacity-90">
+    {content.paragraphs.map((p, i) => (
+      <p class={`reveal ${i === 0 ? 'first-letter:float-left first-letter:mr-3 first-letter:font-display first-letter:text-6xl first-letter:leading-[0.9] first-letter:text-primary first-letter:font-semibold' : ''}`}>
+        {p}
+      </p>
+    ))}
+  </div>
+
+  <blockquote class="reveal relative my-14 rounded-[2rem] bg-base-200 px-8 py-10 md:px-12">
+    <span class="absolute -top-6 left-8 font-display text-8xl leading-none text-primary/30 select-none" aria-hidden="true">“</span>
+    <p class="font-display text-2xl md:text-3xl leading-snug italic">{content.quote}</p>
+  </blockquote>
+
+  <p class="reveal text-lg leading-[1.85] opacity-90">{content.closing}</p>
+  <p class="reveal mt-6 font-display text-3xl italic text-primary">— {content.signature} ♥</p>
+</section>
+
+<!-- Values -->
+<section class="max-w-6xl mx-auto px-4 pb-24">
+  <div class="grid gap-6 md:grid-cols-3">
+    {content.values.map((v, i) => (
+      <div
+        class="reveal rounded-[2rem] border border-base-300 bg-base-100 p-8 hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
+        style={`--reveal-delay: ${i * 90}ms`}
+      >
+        <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-3xl">{v.icon}</span>
+        <h3 class="mt-5 text-xl font-semibold">{v.title}</h3>
+        <p class="mt-2 opacity-70">{v.text}</p>
+      </div>
+    ))}
+  </div>
+</section>
+

@@ -25,6 +25,8 @@ export interface RecipeSummary {
   imageZoom?: number;
   videoUrl?: string | null;
   createdAt?: string;
+  position?: number;
+  featured?: boolean;
   category: Category | null;
 }
 
@@ -69,6 +71,17 @@ async function apiFetch<T>(path: string): Promise<T | null> {
 
 const pick = (sr: string | null | undefined, en: string) => (sr && sr.trim() ? sr : en);
 
+// Serbian names for categories (the DB stores English names)
+export const CATEGORY_SR: Record<string, string> = {
+  breakfast: 'Doručak',
+  lunch: 'Ručak',
+  dinner: 'Večera',
+  drink: 'Pića',
+  dessert: 'Deserti',
+  'healthy-dessert': 'Zdravi deserti',
+  'ice-cream': 'Sladoled',
+};
+
 // Swap in the Serbian fields (when present) so components can always read
 // `title`, `description`, `text` regardless of language. English is the fallback.
 export function localizeRecipe<T extends RecipeSummary>(recipe: T, lang: Lang): T {
@@ -77,6 +90,9 @@ export function localizeRecipe<T extends RecipeSummary>(recipe: T, lang: Lang): 
     ...recipe,
     title: pick(recipe.titleSr, recipe.title),
     description: recipe.descriptionSr?.trim() ? recipe.descriptionSr : recipe.description,
+    category: recipe.category
+      ? { ...recipe.category, name: CATEGORY_SR[recipe.category.slug] ?? recipe.category.name }
+      : null,
   };
   const lines = (list?: RecipeLine[]) => list?.map((l) => ({ ...l, text: pick(l.textSr, l.text) }));
   if ('ingredients' in recipe) r.ingredients = lines((recipe as any).ingredients);

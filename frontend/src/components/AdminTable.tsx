@@ -1,6 +1,7 @@
 // AdminTable — reusable table for the admin dashboard (recipes & blog posts).
-// Features: row checkboxes + "select all", bulk publish / draft / delete,
-// search, status & category filters, date column with sorting.
+// Features: row checkboxes + "select all", bulk publish / draft / feature / delete,
+// search, status & category filters, date column with sorting,
+// and (recipes) a "Custom order" mode with drag & drop + ⭐ homepage toggle.
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { BulkAction } from '../lib/admin';
@@ -13,6 +14,7 @@ export interface AdminRow {
   imageStyle?: React.CSSProperties;
   date: string;
   published: boolean;
+  featured?: boolean;
   category?: string | null;
   meta?: string;
 }
@@ -25,10 +27,14 @@ interface Props {
   onDelete: (id: string, title: string) => void;
   /** Returns true when the action succeeded (clears the selection). */
   onBulk: (ids: string[], action: BulkAction) => Promise<boolean>;
+  /** Enables ⭐ column + feature bulk actions. */
+  onToggleFeatured?: (id: string, featured: boolean) => void;
+  /** Enables the "Custom order" sort with drag & drop. Receives ALL ids in the new order. */
+  onReorder?: (ids: string[]) => Promise<boolean>;
 }
 
-type StatusFilter = 'all' | 'published' | 'draft';
-type Sort = 'newest' | 'oldest' | 'title';
+type StatusFilter = 'all' | 'published' | 'draft' | 'featured';
+type Sort = 'custom' | 'newest' | 'oldest' | 'title';
 
 export function StatusChip({ published }: { published: boolean }) {
   return (
@@ -46,36 +52,60 @@ export function StatusChip({ published }: { published: boolean }) {
 const formatDate = (d: string) =>
   new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
-export default function AdminTable({ rows, noun, showCategory = false, onEdit, onDelete, onBulk }: Props) {
+export default function AdminTable({
+  rows, noun, showCategory = false, onEdit, onDelete, onBulk, onToggleFeatured, onReorder,
+}: Props) {
+  const canReorder = !!onReorder;
+  const canFeature = !!onToggleFeatured;
+
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [category, setCategory] = useState('all');
-  const [sort, setSort] = useState<Sort>('newest');
+  const [sort, setSort] = useState<Sort>(canReorder ? 'custom' : 'newest');
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
   const selectAllRef = useRef<HTMLInputElement>(null);
+
+  // Drag & drop working copy of the order (ids). null = not edited.
+  const [order, setOrder] = useState<string[] | null>(null);
+  const dragId = useRef<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+
+  useEffect(() => setOrder(null), [rows]);
+
+  const byId = useMemo(() => new Map(rows.map((r) => [r.id, r])), [rows]);
+  const orderedRows = useMemo(
+    () => (order ? (order.map((id) => byId.get(id)).filter(Boolean) as AdminRow[]) : rows),
+    [order, rows, byId]
+  );
 
   const categories = useMemo(
     () => [...new Set(rows.map((r) => r.category).filter(Boolean) as string[])].sort(),
     [rows]
   );
 
+  const filtersActive = search.trim() !== '' || status !== 'all' || category !== 'all';
+  const dragEnabled = canReorder && sort === 'custom' && !filtersActive;
+  const dirty = order !== null;
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const list = rows.filter(
+    const list = orderedRows.filter(
       (r) =>
         (!q || r.title.toLowerCase().includes(q) || r.slug.includes(q)) &&
-        (status === 'all' || (status === 'published') === r.published) &&
+        (status === 'all' ||
+          (status === 'featured' ? !!r.featured : (status === 'published') === r.published)) &&
         (category === 'all' || (r.category ?? '') === category)
     );
-    return list.sort((a, b) =>
+    if (sort === 'custom') return list;
+    return [...list].sort((a, b) =>
       sort === 'title'
         ? a.title.localeCompare(b.title)
         : sort === 'newest'
         ? +new Date(b.date) - +new Date(a.date)
         : +new Date(a.date) - +new Date(b.date)
     );
-  }, [rows, search, status, category, sort]);
+  }, [orderedRows, search, status, category, sort]);
 
   // Drop selections for rows that no longer exist (e.g. after delete)
   useEffect(() => {
@@ -115,11 +145,52 @@ export default function AdminTable({ rows, noun, showCategory = false, onEdit, o
     if (ok) setSelected(new Set());
   }
 
+  // ----- ordering -----
+  const currentIds = () => orderedRows.map((r) => r.id);
+
+  function moveTo(id: string, targetIndex: number) {
+    const ids = currentIds().filter((x) => x !== id);
+    ids.splice(Math.max(0, Math.min(targetIndex, ids.length)), 0, id);
+    setOrder(ids);
+  }
+
+  function moveBy(id: string, delta: number) {
+    const ids = currentIds();
+    moveTo(id, ids.indexOf(id) + delta);
+  }
+
+  function moveSelectedToTop() {
+    const ids = currentIds();
+    const sel = ids.filter((id) => selected.has(id));
+    setOrder([...sel, ...ids.filter((id) => !selected.has(id))]);
+  }
+
+  function onDrop(targetId: string) {
+    const from = dragId.current;
+    dragId.current = null;
+    setDragOverId(null);
+    if (!from || from === targetId) return;
+    const ids = currentIds();
+    moveTo(from, ids.indexOf(targetId));
+  }
+
+  async function saveOrder() {
+    if (!order || !onReorder) return;
+    setBusy(true);
+    const ok = await onReorder(order);
+    setBusy(false);
+    if (ok) setOrder(null);
+  }
+
   const counts = {
     all: rows.length,
     published: rows.filter((r) => r.published).length,
     draft: rows.filter((r) => !r.published).length,
+    featured: rows.filter((r) => r.featured).length,
   };
+  const statusTabs: StatusFilter[] = canFeature ? ['all', 'published', 'draft', 'featured'] : ['all', 'published', 'draft'];
+  const statusLabel: Record<StatusFilter, string> = { all: 'All', published: 'Published', draft: 'Drafts', featured: '⭐ Homepage' };
+  const colCount = 5 + (showCategory ? 1 : 0) + (canFeature ? 1 : 0) + (canReorder ? 1 : 0);
 
   return (
     <div className="flex flex-col gap-4">
@@ -137,14 +208,14 @@ export default function AdminTable({ rows, noun, showCategory = false, onEdit, o
         </label>
 
         <div className="join">
-          {(['all', 'published', 'draft'] as StatusFilter[]).map((s) => (
+          {statusTabs.map((s) => (
             <button
               key={s}
               type="button"
               className={`join-item btn btn-sm ${status === s ? 'btn-primary' : 'btn-ghost bg-base-200'}`}
               onClick={() => setStatus(s)}
             >
-              {s === 'all' ? 'All' : s === 'published' ? 'Published' : 'Drafts'}
+              {statusLabel[s]}
               <span className="opacity-60 text-xs">{counts[s]}</span>
             </button>
           ))}
@@ -160,6 +231,7 @@ export default function AdminTable({ rows, noun, showCategory = false, onEdit, o
         )}
 
         <select className="select select-bordered select-sm" value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
+          {canReorder && <option value="custom">Custom order (site order)</option>}
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
           <option value="title">Title A–Z</option>
@@ -170,21 +242,48 @@ export default function AdminTable({ rows, noun, showCategory = false, onEdit, o
         </span>
       </div>
 
+      {/* Reorder hint / save bar */}
+      {canReorder && sort === 'custom' && (
+        <div
+          className={`flex flex-wrap items-center gap-3 rounded-2xl px-4 py-2 text-sm ${
+            dirty ? 'sticky top-20 z-20 border border-secondary/40 bg-base-100/95 shadow-lg backdrop-blur' : 'bg-base-200/60'
+          }`}
+        >
+          {dirty ? (
+            <>
+              <span className="font-semibold">↕ You changed the order</span>
+              <button className="btn btn-sm btn-primary" disabled={busy} onClick={saveOrder}>Save order</button>
+              <button className="btn btn-sm btn-ghost" disabled={busy} onClick={() => setOrder(null)}>Undo</button>
+              {busy && <span className="loading loading-spinner loading-sm text-primary" />}
+            </>
+          ) : filtersActive ? (
+            <span className="opacity-70">Clear the search and filters to reorder recipes.</span>
+          ) : (
+            <span className="opacity-70">
+              This is the order recipes appear on the site. Drag rows by <b>⋮⋮</b> or use the arrows, then click <b>Save order</b>.
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Bulk action bar */}
       {selected.size > 0 && (
         <div className="sticky top-20 z-20 flex flex-wrap items-center gap-2 rounded-2xl border border-primary/30 bg-base-100/95 px-4 py-2 shadow-lg backdrop-blur">
           <span className="text-sm font-semibold mr-2">
             {selected.size} {selected.size === 1 ? noun.one : noun.many} selected
           </span>
-          <button className="btn btn-sm btn-success" disabled={busy} onClick={() => bulk('publish')}>
-            Publish
-          </button>
-          <button className="btn btn-sm btn-warning" disabled={busy} onClick={() => bulk('unpublish')}>
-            Move to drafts
-          </button>
-          <button className="btn btn-sm btn-error btn-outline" disabled={busy} onClick={() => bulk('delete')}>
-            Delete
-          </button>
+          <button className="btn btn-sm btn-success" disabled={busy} onClick={() => bulk('publish')}>Publish</button>
+          <button className="btn btn-sm btn-warning" disabled={busy} onClick={() => bulk('unpublish')}>Move to drafts</button>
+          {canFeature && (
+            <>
+              <button className="btn btn-sm btn-outline" disabled={busy} onClick={() => bulk('feature')}>⭐ Show on homepage</button>
+              <button className="btn btn-sm btn-ghost" disabled={busy} onClick={() => bulk('unfeature')}>Remove from homepage</button>
+            </>
+          )}
+          {dragEnabled && (
+            <button className="btn btn-sm btn-ghost" disabled={busy} onClick={moveSelectedToTop}>⤒ Move to top</button>
+          )}
+          <button className="btn btn-sm btn-error btn-outline" disabled={busy} onClick={() => bulk('delete')}>Delete</button>
           {busy && <span className="loading loading-spinner loading-sm text-primary" />}
           <button className="btn btn-sm btn-ghost ml-auto" disabled={busy} onClick={() => setSelected(new Set())}>
             Clear selection
@@ -203,6 +302,7 @@ export default function AdminTable({ rows, noun, showCategory = false, onEdit, o
           <table className="table w-full">
             <thead>
               <tr>
+                {canReorder && <th className="w-16">{sort === 'custom' ? '#' : ''}</th>}
                 <th className="w-10">
                   <input
                     ref={selectAllRef}
@@ -217,26 +317,68 @@ export default function AdminTable({ rows, noun, showCategory = false, onEdit, o
                 {showCategory && <th>Category</th>}
                 <th>Date</th>
                 <th>Status</th>
+                {canFeature && <th className="text-center" title="Shown in the homepage slider">Home</th>}
                 <th className="text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={showCategory ? 6 : 5} className="text-center py-10 opacity-60">
+                  <td colSpan={colCount} className="text-center py-10 opacity-60">
                     No {noun.many} match these filters.
                   </td>
                 </tr>
               )}
-              {filtered.map((r) => {
+              {filtered.map((r, index) => {
                 const isSel = selected.has(r.id);
                 return (
                   <tr
                     key={r.id}
-                    className={`cursor-pointer transition-colors ${isSel ? 'bg-primary/10' : 'hover:bg-base-200/60'}`}
-                    onClick={() => toggle(r.id)}
+                    draggable={dragEnabled}
+                    onDragStart={(e) => {
+                      dragId.current = r.id;
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onDragOver={(e) => {
+                      if (!dragEnabled) return;
+                      e.preventDefault();
+                      if (dragOverId !== r.id) setDragOverId(r.id);
+                    }}
+                    onDragLeave={() => dragOverId === r.id && setDragOverId(null)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      onDrop(r.id);
+                    }}
+                    onDragEnd={() => {
+                      dragId.current = null;
+                      setDragOverId(null);
+                    }}
+                    className={`transition-colors ${isSel ? 'bg-primary/10' : 'hover:bg-base-200/60'} ${
+                      dragOverId === r.id ? 'outline outline-2 -outline-offset-2 outline-primary' : ''
+                    }`}
                   >
-                    <td onClick={(e) => e.stopPropagation()}>
+                    {canReorder && (
+                      <td>
+                        {sort === 'custom' && (
+                          <div className="flex items-center gap-1">
+                            <span
+                              className={`select-none text-lg leading-none ${dragEnabled ? 'cursor-grab active:cursor-grabbing opacity-60 hover:opacity-100' : 'opacity-20'}`}
+                              title={dragEnabled ? 'Drag to reorder' : 'Clear filters to reorder'}
+                            >
+                              ⋮⋮
+                            </span>
+                            <span className="w-6 text-xs tabular-nums opacity-50">{index + 1}</span>
+                            {dragEnabled && (
+                              <span className="flex flex-col">
+                                <button type="button" className="text-[10px] leading-none opacity-50 hover:opacity-100 disabled:opacity-10" disabled={index === 0} onClick={() => moveBy(r.id, -1)} title="Move up">▲</button>
+                                <button type="button" className="text-[10px] leading-none opacity-50 hover:opacity-100 disabled:opacity-10" disabled={index === filtered.length - 1} onClick={() => moveBy(r.id, 1)} title="Move down">▼</button>
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </td>
+                    )}
+                    <td>
                       <input
                         type="checkbox"
                         className="checkbox checkbox-sm checkbox-primary"
@@ -245,11 +387,11 @@ export default function AdminTable({ rows, noun, showCategory = false, onEdit, o
                         aria-label={`Select ${r.title}`}
                       />
                     </td>
-                    <td>
+                    <td className="cursor-pointer" onClick={() => toggle(r.id)}>
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-base-300 flex items-center justify-center text-xl">
                           {r.image ? (
-                            <img src={r.image} alt="" className="h-full w-full object-cover" style={r.imageStyle} />
+                            <img src={r.image} alt="" draggable={false} className="h-full w-full object-cover" style={r.imageStyle} />
                           ) : (
                             noun.emoji
                           )}
@@ -274,7 +416,20 @@ export default function AdminTable({ rows, noun, showCategory = false, onEdit, o
                     <td>
                       <StatusChip published={r.published} />
                     </td>
-                    <td onClick={(e) => e.stopPropagation()}>
+                    {canFeature && (
+                      <td className="text-center">
+                        <button
+                          type="button"
+                          onClick={() => onToggleFeatured!(r.id, !r.featured)}
+                          className={`text-xl transition-transform hover:scale-125 ${r.featured ? '' : 'opacity-25 grayscale hover:opacity-70'}`}
+                          title={r.featured ? 'Shown on homepage — click to remove' : 'Click to show on homepage'}
+                          aria-pressed={!!r.featured}
+                        >
+                          ⭐
+                        </button>
+                      </td>
+                    )}
+                    <td>
                       <div className="flex justify-end gap-1">
                         <button onClick={() => onEdit(r.id)} className="btn btn-xs btn-outline">Edit</button>
                         <button onClick={() => onDelete(r.id, r.title)} className="btn btn-xs btn-error btn-outline">Delete</button>

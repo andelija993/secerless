@@ -51,6 +51,7 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
   const [cover, setCover] = useState<Framing>(coverFraming(initial ?? {}));
   const [categoryId, setCategoryId] = useState<string>(initial?.categoryId ?? '');
   const [published, setPublished] = useState<boolean>(initial?.published ?? true);
+  const [featured, setFeatured] = useState<boolean>(initial?.featured ?? false);
   const [ingredients, setIngredients] = useState<Line[]>(toLines(initial?.ingredients));
   const [steps, setSteps] = useState<Line[]>(toLines(initial?.steps));
   // Gallery: array of { url, caption }
@@ -122,6 +123,7 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
       videoUrl: videoUrl.trim() || null,
       categoryId: categoryId || null,
       published,
+      featured,
       ingredients: cleanLines(ingredients),
       steps: cleanLines(steps),
       images: galleryImages
@@ -332,6 +334,17 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
         />
         <span className="label-text">
           {published ? '🟢 Published (visible on site)' : '🟡 Draft (hidden from visitors)'}
+        </span>
+      </label>
+
+      {/* Homepage toggle */}
+      <label className="flex items-center gap-3 cursor-pointer select-none">
+        <input
+          type="checkbox" className="toggle toggle-warning"
+          checked={featured} onChange={(e) => setFeatured(e.target.checked)}
+        />
+        <span className="label-text">
+          {featured ? '⭐ Shown in the homepage slider' : 'Not on the homepage'}
         </span>
       </label>
 
