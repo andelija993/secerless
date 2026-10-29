@@ -1,5 +1,7 @@
 # Šećerless 🍰
 
+https://secerless.netlify.app/
+
 A bilingual (English / Serbian) recipe blog and food-story site with full
 write-ups, a blog, an admin CMS, user accounts, favorites and a contact form.
 
