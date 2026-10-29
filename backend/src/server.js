@@ -5,6 +5,7 @@ import cookieParser from 'cookie-parser';
 import routes from './routes.js';
 import { authenticate } from './middleware/auth.js';
 import { clearCache } from './lib/cache.js';
+import { scheduleRebuild } from './lib/rebuild.js';
 
 // Refuse to start with a missing or placeholder secret — anyone could forge login tokens
 const secret = process.env.JWT_SECRET;
@@ -21,11 +22,17 @@ app.use(express.json({ limit: '10mb' }));
 app.use(cookieParser());
 app.use(authenticate);
 
-// Successful content writes clear the read cache so edits show up immediately
+// Successful content writes clear the read cache so edits show up immediately,
+// and (when configured) schedule a rebuild of the static site
 const CONTENT_WRITE = /^\/api\/(recipes|blog|categories|admin|auth)\b/;
+const SITE_CONTENT = /^\/api\/(recipes|blog|categories|admin)\b/;
 app.use((req, res, next) => {
   if (req.method !== 'GET' && CONTENT_WRITE.test(req.path)) {
-    res.on('finish', () => res.statusCode < 400 && clearCache());
+    res.on('finish', () => {
+      if (res.statusCode >= 400) return;
+      clearCache();
+      if (SITE_CONTENT.test(req.path)) scheduleRebuild();
+    });
   }
   next();
 });
