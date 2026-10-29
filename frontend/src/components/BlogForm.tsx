@@ -92,30 +92,30 @@ export default function BlogForm({ initial, onSave, onCancel }: Props) {
       {error && <div className="alert alert-error text-sm py-2"><span>{error}</span></div>}
 
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="form-control">
-          <span className="label-text font-semibold mb-1">English title *</span>
+        <label className="fieldset">
+          <span className="fieldset-legend justify-start">English title *</span>
           <input
-            type="text" className="input input-bordered" value={title} required
+            type="text" className="input w-full" value={title} required
             onChange={(e) => handleTitleChange(e.target.value)}
           />
         </label>
 
-        <label className="form-control">
-          <span className="label-text font-semibold mb-1">Srpski naslov (optional)</span>
+        <label className="fieldset">
+          <span className="fieldset-legend justify-start">Srpski naslov (optional)</span>
           <input
-            type="text" className="input input-bordered" value={titleSr}
+            type="text" className="input w-full" value={titleSr}
             onChange={(e) => setTitleSr(e.target.value)}
             placeholder="Leave empty if you want to keep only the English version"
           />
         </label>
       </div>
 
-      <label className="form-control">
-        <span className="label-text font-semibold mb-1">
+      <label className="fieldset">
+        <span className="fieldset-legend justify-start">
           Slug <span className="opacity-50 font-normal">(URL path — must be unique)</span>
         </span>
         <input
-          type="text" className="input input-bordered font-mono text-sm" value={slug} required
+          type="text" className="input w-full font-mono text-sm" value={slug} required
           onChange={(e) => setSlug(e.target.value)}
         />
         <span className="text-xs opacity-50 mt-1">Preview: /blog/{slug || '…'}</span>
@@ -127,12 +127,12 @@ export default function BlogForm({ initial, onSave, onCancel }: Props) {
       {/* Content with preview toggle */}
       <div>
         <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
-          <span className="label-text font-semibold">English content *</span>
+          <span className="fieldset-legend justify-start">English content *</span>
           <div className="flex items-center gap-2">
             {preview && (
-              <div className="btn-group btn-group-xs">
-                <button type="button" className={`btn ${previewLang === 'en' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setPreviewLang('en')}>EN</button>
-                <button type="button" className={`btn ${previewLang === 'sr' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setPreviewLang('sr')}>SR</button>
+              <div className="join">
+                <button type="button" className={`btn btn-xs join-item ${previewLang === 'en' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setPreviewLang('en')}>EN</button>
+                <button type="button" className={`btn btn-xs join-item ${previewLang === 'sr' ? 'btn-primary' : 'btn-ghost'}`} onClick={() => setPreviewLang('sr')}>SR</button>
               </div>
             )}
             <button
@@ -160,7 +160,7 @@ export default function BlogForm({ initial, onSave, onCancel }: Props) {
                 </button>
               </div>
               <textarea
-                className="textarea textarea-bordered w-full font-mono text-sm leading-relaxed"
+                className="textarea w-full font-mono text-sm leading-relaxed"
                 rows={10}
                 value={content}
                 required
@@ -177,7 +177,7 @@ export default function BlogForm({ initial, onSave, onCancel }: Props) {
                 </button>
               </div>
               <textarea
-                className="textarea textarea-bordered w-full font-mono text-sm leading-relaxed"
+                className="textarea w-full font-mono text-sm leading-relaxed"
                 rows={10}
                 value={contentSr}
                 placeholder={`# Naslov\n\nOstavite prazno ako želite da objava ostane samo na engleskom...`}
@@ -197,7 +197,7 @@ export default function BlogForm({ initial, onSave, onCancel }: Props) {
           type="checkbox" className="toggle toggle-primary"
           checked={published} onChange={(e) => setPublished(e.target.checked)}
         />
-        <span className="label-text">
+        <span className="text-sm">
           {published ? '🟢 Published (visible on site)' : '🟡 Draft (hidden from visitors)'}
         </span>
       </label>

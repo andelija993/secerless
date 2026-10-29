@@ -9,9 +9,10 @@
 //
 // Edit / New opens a DaisyUI modal that renders RecipeForm or BlogForm.
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getMe, type AuthUser } from '../lib/auth';
 import { showToast } from '../lib/toast';
+import { confirmDialog } from '../lib/confirm';
 import {
   adminGetAllRecipes,
   adminGetAllPosts,
@@ -48,6 +49,15 @@ export default function AdminDashboard({ lang }: { lang: string }) {
   const [modalTab, setModalTab] = useState<Tab>('recipes');
   const [editingRecipe, setEditingRecipe] = useState<any | null>(null);
   const [editingPost, setEditingPost] = useState<any | null>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  // Open/close the native <dialog> whenever modalOpen changes
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (modalOpen && !dialog.open) dialog.showModal();
+    if (!modalOpen && dialog.open) dialog.close();
+  }, [modalOpen]);
 
   useEffect(() => {
     getMe().then((u) => {
@@ -71,7 +81,7 @@ export default function AdminDashboard({ lang }: { lang: string }) {
   }
 
   async function handleDeleteRecipe(id: string, title: string) {
-    if (!confirm(`Delete recipe "${title}"? This cannot be undone.`)) return;
+    if (!(await confirmDialog(`"${title}" will be permanently deleted.`, { title: 'Delete recipe?' }))) return;
     const { ok, data } = await adminDeleteRecipe(id);
     if (ok) {
       setRecipes((prev) => prev.filter((r) => r.id !== id));
@@ -82,7 +92,7 @@ export default function AdminDashboard({ lang }: { lang: string }) {
   }
 
   async function handleDeletePost(id: string, title: string) {
-    if (!confirm(`Delete post "${title}"? This cannot be undone.`)) return;
+    if (!(await confirmDialog(`"${title}" will be permanently deleted.`, { title: 'Delete blog post?' }))) return;
     const { ok, data } = await adminDeletePost(id);
     if (ok) {
       setPosts((prev) => prev.filter((p) => p.id !== id));
@@ -94,7 +104,13 @@ export default function AdminDashboard({ lang }: { lang: string }) {
 
   async function handleBulk(kind: Tab, ids: string[], action: BulkAction): Promise<boolean> {
     const what = kind === 'recipes' ? (ids.length === 1 ? 'recipe' : 'recipes') : ids.length === 1 ? 'post' : 'posts';
-    if (action === 'delete' && !confirm(`Delete ${ids.length} ${what}? This cannot be undone.`)) return false;
+    if (
+      action === 'delete' &&
+      !(await confirmDialog(`${ids.length} ${what} will be permanently deleted. This cannot be undone.`, {
+        title: `Delete ${ids.length} ${what}?`,
+      }))
+    )
+      return false;
     const { ok, data } = kind === 'recipes' ? await adminBulkRecipes(ids, action) : await adminBulkPosts(ids, action);
     if (!ok) {
       showToast(data?.error || 'Bulk action failed', 'error');
@@ -293,7 +309,7 @@ export default function AdminDashboard({ lang }: { lang: string }) {
       </div>
 
       {/* Tabs */}
-      <div role="tablist" className="tabs tabs-boxed mb-6 w-fit">
+      <div role="tablist" className="tabs tabs-box mb-6 w-fit">
         <button
           role="tab"
           className={`tab ${tab === 'recipes' ? 'tab-active' : ''}`}
@@ -338,17 +354,15 @@ export default function AdminDashboard({ lang }: { lang: string }) {
         />
       )}
 
-      {/* Modal (DaisyUI) */}
-      {modalOpen && (
-        <div className="modal modal-open" role="dialog">
-          <div className="modal-box max-w-2xl max-h-[92vh] overflow-y-auto relative">
-            <button
-              className="btn btn-sm btn-circle btn-ghost absolute right-3 top-3 z-10"
-              onClick={closeModal}
-              aria-label="Close"
-            >
-              ✕
-            </button>
+      {/* Modal — native <dialog> with daisyUI classes: Esc closes it, focus stays inside */}
+      <dialog ref={dialogRef} className="modal" onClose={closeModal}>
+        {modalOpen && (
+          <div className="modal-box max-w-2xl max-h-[92vh]">
+            <form method="dialog">
+              <button className="btn btn-sm btn-circle btn-ghost absolute right-3 top-3 z-10" aria-label="Close">
+                ✕
+              </button>
+            </form>
             {modalTab === 'recipes' ? (
               <RecipeForm
                 initial={editingRecipe}
@@ -364,10 +378,12 @@ export default function AdminDashboard({ lang }: { lang: string }) {
               />
             )}
           </div>
-          {/* Clicking backdrop closes modal */}
-          <div className="modal-backdrop bg-black/40" onClick={closeModal} />
-        </div>
-      )}
+        )}
+        {/* Clicking the backdrop closes the modal */}
+        <form method="dialog" className="modal-backdrop">
+          <button>close</button>
+        </form>
+      </dialog>
     </div>
   );
 }

@@ -196,7 +196,7 @@ export default function AdminTable({
     <div className="flex flex-col gap-4">
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">
-        <label className="input input-bordered input-sm flex items-center gap-2 w-full sm:w-64">
+        <label className="input input-sm flex items-center gap-2 w-full sm:w-64">
           <span className="opacity-50">🔍</span>
           <input
             type="search"
@@ -222,7 +222,7 @@ export default function AdminTable({
         </div>
 
         {showCategory && categories.length > 0 && (
-          <select className="select select-bordered select-sm" value={category} onChange={(e) => setCategory(e.target.value)}>
+          <select className="select select-sm" value={category} onChange={(e) => setCategory(e.target.value)}>
             <option value="all">All categories</option>
             {categories.map((c) => (
               <option key={c} value={c}>{c}</option>
@@ -230,7 +230,7 @@ export default function AdminTable({
           </select>
         )}
 
-        <select className="select select-bordered select-sm" value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
+        <select className="select select-sm" value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
           {canReorder && <option value="custom">Custom order (site order)</option>}
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>

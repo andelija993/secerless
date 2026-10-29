@@ -68,7 +68,7 @@ export default function ImageUpload({ value, onUpload, label = 'Cover Image', hi
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="label-text font-semibold">{label}</span>
+      <span className="fieldset-legend justify-start">{label}</span>
       {hint && <span className="text-xs opacity-60 -mt-1">{hint}</span>}
 
       {/* Drop zone */}

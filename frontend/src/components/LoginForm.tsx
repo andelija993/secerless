@@ -44,7 +44,7 @@ export default function LoginForm({ lang }: Props) {
       <input
         type="email"
         placeholder={t('login.email')}
-        className="input input-bordered w-full"
+        className="input w-full"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
@@ -52,7 +52,7 @@ export default function LoginForm({ lang }: Props) {
       <input
         type="password"
         placeholder={t('login.password')}
-        className="input input-bordered w-full"
+        className="input w-full"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         required

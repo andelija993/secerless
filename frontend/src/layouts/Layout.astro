@@ -68,10 +68,10 @@ const lang = getLangFromUrl(Astro.url);
       })();
     </script>
 
-    <!-- Fixed, top-most layer so toasts are visible even above open modals (DaisyUI modal z-index is 999) -->
     <div
       id="global-toast-root"
-      style="position: fixed; top: 5.5rem; right: 1rem; z-index: 2147483647; display: flex; flex-direction: column; gap: 0.5rem; pointer-events: none; max-width: calc(100vw - 2rem);"
+      popover="manual"
+      class="toast toast-top toast-end top-[5.5rem] m-0 border-0 bg-transparent p-0 overflow-visible whitespace-normal max-w-[calc(100vw-2rem)] pointer-events-none"
     ></div>
 
     <script is:inline>
@@ -80,19 +80,29 @@ const lang = getLangFromUrl(Astro.url);
         if (!root) return;
 
         const eventName = 'secerless:toast';
+        const canPopover = typeof root.showPopover === 'function';
+
+        // (Re)open the popover so it's the newest top-layer item, i.e. above any open modal
+        function bringToFront() {
+          if (!canPopover) return;
+          if (root.matches(':popover-open')) root.hidePopover();
+          root.showPopover();
+        }
 
         function renderToast(message, type = 'success', duration = 2800) {
           const alertClass =
             type === 'success' ? 'alert-success' : type === 'error' ? 'alert-error' : 'alert-info';
           const toast = document.createElement('div');
-          toast.className = `alert ${alertClass} shadow-lg`;
-          toast.style.pointerEvents = 'auto';
+          toast.className = `alert ${alertClass} shadow-lg pointer-events-auto`;
+          toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
           const span = document.createElement('span');
           span.textContent = String(message); // textContent avoids HTML injection
           toast.appendChild(span);
           root.appendChild(toast);
+          bringToFront();
           setTimeout(() => {
             toast.remove();
+            if (canPopover && !root.childElementCount && root.matches(':popover-open')) root.hidePopover();
           }, duration);
         }
 

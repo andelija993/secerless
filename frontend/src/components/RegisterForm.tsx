@@ -43,7 +43,7 @@ export default function RegisterForm({ lang }: Props) {
       <input
         type="text"
         placeholder={t('register.name')}
-        className="input input-bordered w-full"
+        className="input w-full"
         value={firstName}
         onChange={(e) => setFirstName(e.target.value)}
         required
@@ -51,7 +51,7 @@ export default function RegisterForm({ lang }: Props) {
       <input
         type="text"
         placeholder={t('register.surname')}
-        className="input input-bordered w-full"
+        className="input w-full"
         value={lastName}
         onChange={(e) => setLastName(e.target.value)}
         required
@@ -59,7 +59,7 @@ export default function RegisterForm({ lang }: Props) {
       <input
         type="email"
         placeholder={t('register.email')}
-        className="input input-bordered w-full"
+        className="input w-full"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
@@ -67,7 +67,7 @@ export default function RegisterForm({ lang }: Props) {
       <input
         type="password"
         placeholder={t('register.password')}
-        className="input input-bordered w-full"
+        className="input w-full"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
         minLength={6}

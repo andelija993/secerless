@@ -53,7 +53,7 @@ export default function ProfileForm({ lang }: Props) {
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="flex justify-center mb-2">
-        <div className="avatar placeholder">
+        <div className="avatar avatar-placeholder">
           <div className="bg-primary text-primary-content rounded-full w-20">
             {form.avatarUrl ? (
               <img src={form.avatarUrl} alt="Profile" />
@@ -66,31 +66,31 @@ export default function ProfileForm({ lang }: Props) {
         </div>
       </div>
 
-      <label className="form-control">
-        <span className="label-text mb-1">{t('profile.firstName')}</span>
+      <label className="fieldset">
+        <span className="fieldset-legend justify-start">{t('profile.firstName')}</span>
         <input
           type="text"
-          className="input input-bordered w-full"
+          className="input w-full"
           value={form.firstName}
           onChange={(e) => setForm({ ...form, firstName: e.target.value })}
         />
       </label>
 
-      <label className="form-control">
-        <span className="label-text mb-1">{t('profile.lastName')}</span>
+      <label className="fieldset">
+        <span className="fieldset-legend justify-start">{t('profile.lastName')}</span>
         <input
           type="text"
-          className="input input-bordered w-full"
+          className="input w-full"
           value={form.lastName}
           onChange={(e) => setForm({ ...form, lastName: e.target.value })}
         />
       </label>
 
-      <label className="form-control">
-        <span className="label-text mb-1">{t('profile.pictureUrl')}</span>
+      <label className="fieldset">
+        <span className="fieldset-legend justify-start">{t('profile.pictureUrl')}</span>
         <input
           type="url"
-          className="input input-bordered w-full"
+          className="input w-full"
           placeholder="https://..."
           value={form.avatarUrl}
           onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })}

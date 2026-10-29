@@ -30,9 +30,9 @@ const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w
 
     {categories.length > 0 && (
       <div class="mt-8 flex flex-wrap justify-center gap-2" role="group" aria-label="Filter">
-        <button type="button" data-filter="all" class="filter-chip is-active">{t('recipes.all')}</button>
+        <button type="button" data-filter="all" class="btn btn-sm rounded-full btn-primary">{t('recipes.all')}</button>
         {categories.map((c) => (
-          <button type="button" data-filter={c.slug} class="filter-chip">{c.name}</button>
+          <button type="button" data-filter={c.slug} class="btn btn-sm rounded-full">{c.name}</button>
         ))}
       </div>
     )}
@@ -87,63 +87,16 @@ const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w
 
   {recipes.length === 0 && <p class="text-center opacity-60 py-16">{t('recipes.empty')}</p>}
 
-  <!-- Pagination (filled in by the script below) -->
+  <!-- Pagination (daisyUI join, filled in by the script below) -->
   <nav
     id="recipe-pagination"
-    class="mt-14 flex flex-wrap items-center justify-center gap-2"
+    class="mt-14 flex justify-center"
     aria-label="Pagination"
     data-prev={lang === 'sr' ? '← Prethodna' : '← Previous'}
     data-next={lang === 'sr' ? 'Sledeća →' : 'Next →'}
   ></nav>
 </section>
 
-<style>
-  .filter-chip {
-    border-radius: 9999px;
-    padding: 0.55rem 1.15rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    border: 1px solid var(--color-base-300);
-    background: var(--color-base-100);
-    transition: all 0.2s ease;
-    cursor: pointer;
-  }
-  .filter-chip:hover {
-    border-color: color-mix(in oklch, var(--color-primary) 50%, transparent);
-  }
-  :global(.page-btn) {
-    min-width: 2.75rem;
-    height: 2.75rem;
-    padding: 0 1rem;
-    border-radius: 9999px;
-    font-size: 0.875rem;
-    font-weight: 600;
-    border: 1px solid var(--color-base-300);
-    background: var(--color-base-100);
-    transition: all 0.2s ease;
-    cursor: pointer;
-  }
-  :global(.page-btn:hover:not(:disabled)) {
-    border-color: color-mix(in oklch, var(--color-primary) 50%, transparent);
-    color: var(--color-primary);
-  }
-  :global(.page-btn.is-active) {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    color: var(--color-primary-content);
-    box-shadow: 0 8px 20px -8px color-mix(in oklch, var(--color-primary) 60%, transparent);
-  }
-  :global(.page-btn:disabled) {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
-  .filter-chip.is-active {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    color: var(--color-primary-content);
-    box-shadow: 0 8px 20px -8px color-mix(in oklch, var(--color-primary) 60%, transparent);
-  }
-</style>
 
 <script>
   const PER_PAGE = 6;
@@ -167,7 +120,7 @@ const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w
   function pageButton(label: string, target: number, opts: { active?: boolean; disabled?: boolean } = {}) {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'page-btn' + (opts.active ? ' is-active' : '');
+    b.className = 'join-item btn btn-sm sm:btn-md' + (opts.active ? ' btn-primary' : '');
     b.textContent = label;
     b.disabled = !!opts.disabled;
     if (opts.active) b.setAttribute('aria-current', 'page');
@@ -180,7 +133,11 @@ const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w
   }
 
   function render() {
-    chips.forEach((c) => c.classList.toggle('is-active', c.dataset.filter === filter));
+    chips.forEach((c) => {
+      const active = c.dataset.filter === filter;
+      c.classList.toggle('btn-primary', active);
+      c.setAttribute('aria-pressed', String(active));
+    });
 
     const matching = cards.filter((c) => filter === 'all' || c.dataset.category === filter);
     const pages = Math.max(1, Math.ceil(matching.length / PER_PAGE));
@@ -194,22 +151,27 @@ const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w
       if (show) card.classList.add('is-visible');
     });
 
-    // Pagination buttons
+    // Pagination buttons (daisyUI join)
     nav.replaceChildren();
     if (pages > 1) {
-      nav.append(pageButton(nav.dataset.prev!, page - 1, { disabled: page === 1 }));
+      const join = document.createElement('div');
+      join.className = 'join';
+      join.append(pageButton(nav.dataset.prev!, page - 1, { disabled: page === 1 }));
       for (let i = 1; i <= pages; i++) {
         // compact: first, last, current ±1, with … gaps
         if (i === 1 || i === pages || Math.abs(i - page) <= 1) {
-          nav.append(pageButton(String(i), i, { active: i === page }));
+          join.append(pageButton(String(i), i, { active: i === page }));
         } else if (Math.abs(i - page) === 2) {
-          const dots = document.createElement('span');
-          dots.className = 'px-1 opacity-50';
+          const dots = document.createElement('button');
+          dots.type = 'button';
+          dots.className = 'join-item btn btn-sm sm:btn-md btn-disabled';
+          dots.tabIndex = -1;
           dots.textContent = '…';
-          nav.append(dots);
+          join.append(dots);
         }
       }
-      nav.append(pageButton(nav.dataset.next!, page + 1, { disabled: page === pages }));
+      join.append(pageButton(nav.dataset.next!, page + 1, { disabled: page === pages }));
+      nav.append(join);
     }
     syncUrl();
   }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
 import { getMe, logout as apiLogout, type AuthUser } from '../lib/auth';
 
@@ -17,10 +17,8 @@ export default function ProfileMenu({ lang }: Props) {
   const t = useTranslations(lang);
   const translatePath = useTranslatedPath(lang);
 
-  const [open, setOpen] = useState(false);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   // Ask the backend "who am I?" — the httpOnly JWT cookie (if any) is sent
   // automatically by the browser, so we don't need to manage it ourselves.
@@ -30,97 +28,68 @@ export default function ProfileMenu({ lang }: Props) {
       .finally(() => setLoading(false));
   }, []);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
-
-
   function handleLogout() {
     apiLogout().then(() => {
       setUser(null);
-      setOpen(false);
       window.location.href = translatePath('/');
     });
   }
 
-  // --- Auth state now comes from the real Express/JWT backend (Phase 3) ---
+  const displayName = user
+    ? user.firstName || user.lastName
+      ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim()
+      : user.email
+    : t('profile.guest');
 
+  // daisyUI dropdown: opens while the trigger/content has focus, closes on outside click or Esc-blur
   return (
-    <div className="relative" ref={menuRef}>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="btn btn-circle btn-ghost avatar placeholder"
+    <div className="dropdown dropdown-end">
+      <div
+        tabIndex={0}
+        role="button"
+        className={`btn btn-circle btn-ghost avatar avatar-placeholder ${loading ? 'pointer-events-none' : ''}`}
         aria-label="Open profile menu"
-        disabled={loading}
+        aria-haspopup="menu"
       >
         {loading ? (
           <div className="bg-base-300 rounded-full w-10 animate-pulse" />
         ) : user?.avatarUrl ? (
           <div className="w-10 rounded-full">
-            <img src={user.avatarUrl} alt={`${user.firstName ?? ''} ${user.lastName ?? ''}`} />
+            <img src={user.avatarUrl} alt={displayName} />
           </div>
         ) : (
-          <div className="bg-primary text-primary-content rounded-full w-10 flex items-center justify-center font-semibold">
-            {user ? getInitials(user) : '👤'}
+          <div className="bg-primary text-primary-content rounded-full w-10 font-semibold">
+            <span>{user ? getInitials(user) : '👤'}</span>
           </div>
         )}
-      </button>
+      </div>
 
-      {open && (
-        <div className="absolute right-0 mt-4 w-64 bg-base-100 rounded-box shadow-2xl border border-base-300 p-3 z-50">
-          {/* Identity header */}
-          <div className="px-2 py-1 mb-2">
-            <p className="font-semibold">
-              {user ? (user.firstName || user.lastName ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() : user.email) : t('profile.guest')}
-            </p>
-          </div>
+      <div tabIndex={0} className="dropdown-content z-50 mt-4 w-64 rounded-box border border-base-300 bg-base-100 p-2 shadow-2xl">
+        <p className="px-3 pt-2 pb-1 font-semibold truncate">{displayName}</p>
+        {user && <p className="px-3 pb-1 text-xs opacity-60 truncate">{user.email}</p>}
+        <div className="divider my-1" />
 
-          <div className="divider my-1"></div>
-
-          {/* Auth-dependent links */}
-          {user ? (
-            <>
-              <a href={translatePath('/profile')} className="btn btn-ghost btn-sm justify-start w-full">
-                {t('profile.myProfile')}
-              </a>
-              <a href={translatePath('/favorites')} className="btn btn-ghost btn-sm justify-start w-full">
-                ❤️ {t('profile.favorites')}
-              </a>
+        {user ? (
+          <>
+            <ul className="menu w-full p-0">
+              <li><a href={translatePath('/profile')}>👤 {t('profile.myProfile')}</a></li>
+              <li><a href={translatePath('/favorites')}>❤️ {t('profile.favorites')}</a></li>
               {user.role === 'ADMIN' && (
-                <a href={translatePath('/admin')} className="btn btn-ghost btn-sm justify-start w-full">
-                  🛠️ {t('profile.admin')}
-                </a>
+                <li><a href={translatePath('/admin')}>🛠️ {t('profile.admin')}</a></li>
               )}
-            </>
-          ) : (
-            <>
-              <a href={translatePath('/login')} className="btn btn-primary btn-sm justify-start w-full mb-1">
-                {t('profile.login')}
-              </a>
-              <a href={translatePath('/register')} className="btn btn-ghost btn-sm justify-start w-full">
-                {t('profile.signup')}
-              </a>
-            </>
-          )}
-
-
-          {user && (
-            <>
-              <div className="divider my-1"></div>
-              <button onClick={handleLogout} className="btn btn-ghost btn-sm justify-start w-full text-error">
-                {t('profile.logout')}
-              </button>
-            </>
-          )}
-        </div>
-      )}
+            </ul>
+            <div className="divider my-1" />
+            <ul className="menu w-full p-0">
+              <li><button type="button" onClick={handleLogout} className="text-error">{t('profile.logout')}</button></li>
+            </ul>
+          </>
+        ) : (
+          <div className="flex flex-col gap-1 p-1">
+            <a href={translatePath('/login')} className="btn btn-primary btn-sm w-full">{t('profile.login')}</a>
+            <a href={translatePath('/register')} className="btn btn-ghost btn-sm w-full">{t('profile.signup')}</a>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

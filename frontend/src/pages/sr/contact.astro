@@ -15,17 +15,17 @@ const t = useTranslations(lang);
 
     <!-- Static form for now — Phase 2/6 will wire this to POST /api/contact -->
     <form class="flex flex-col gap-4">
-      <label class="form-control">
-        <span class="label-text mb-1">{t('contact.name')}</span>
-        <input type="text" placeholder={t('contact.namePlaceholder')} class="input input-bordered w-full" required />
+      <label class="fieldset">
+        <span class="fieldset-legend justify-start">{t('contact.name')}</span>
+        <input type="text" placeholder={t('contact.namePlaceholder')} class="input w-full" required />
       </label>
-      <label class="form-control">
-        <span class="label-text mb-1">{t('contact.email')}</span>
-        <input type="email" placeholder="you@example.com" class="input input-bordered w-full" required />
+      <label class="fieldset">
+        <span class="fieldset-legend justify-start">{t('contact.email')}</span>
+        <input type="email" placeholder="you@example.com" class="input w-full" required />
       </label>
-      <label class="form-control">
-        <span class="label-text mb-1">{t('contact.message')}</span>
-        <textarea class="textarea textarea-bordered w-full h-32" placeholder={t('contact.messagePlaceholder')} required></textarea>
+      <label class="fieldset">
+        <span class="fieldset-legend justify-start">{t('contact.message')}</span>
+        <textarea class="textarea w-full h-32" placeholder={t('contact.messagePlaceholder')} required></textarea>
       </label>
       <button type="submit" class="btn btn-primary mt-2">{t('contact.submit')}</button>
     </form>

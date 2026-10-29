@@ -148,17 +148,17 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
 
       {/* Title */}
       <div className="grid sm:grid-cols-2 gap-3">
-        <label className="form-control">
-          <span className="label-text font-semibold mb-1">Title (EN) *</span>
+        <label className="fieldset">
+          <span className="fieldset-legend justify-start">Title (EN) *</span>
           <input
-            type="text" className="input input-bordered" value={title} required
+            type="text" className="input w-full" value={title} required
             onChange={(e) => handleTitleChange(e.target.value)}
           />
         </label>
-        <label className="form-control">
-          <span className="label-text font-semibold mb-1">Naslov (SR)</span>
+        <label className="fieldset">
+          <span className="fieldset-legend justify-start">Naslov (SR)</span>
           <input
-            type="text" className="input input-bordered" value={titleSr}
+            type="text" className="input w-full" value={titleSr}
             onChange={(e) => setTitleSr(e.target.value)}
             placeholder="Optional — falls back to English"
           />
@@ -166,12 +166,12 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
       </div>
 
       {/* Slug */}
-      <label className="form-control">
-        <span className="label-text font-semibold mb-1">
+      <label className="fieldset">
+        <span className="fieldset-legend justify-start">
           Slug <span className="opacity-50 font-normal">(URL path — must be unique)</span>
         </span>
         <input
-          type="text" className="input input-bordered font-mono text-sm" value={slug} required
+          type="text" className="input w-full font-mono text-sm" value={slug} required
           onChange={(e) => setSlug(e.target.value)}
         />
         <span className="text-xs opacity-50 mt-1">Preview: /recipes/{slug || '…'}</span>
@@ -179,18 +179,18 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
 
       {/* Description */}
       <div className="grid sm:grid-cols-2 gap-3">
-        <label className="form-control">
-          <span className="label-text font-semibold mb-1">Short Description (EN)</span>
+        <label className="fieldset">
+          <span className="fieldset-legend justify-start">Short Description (EN)</span>
           <textarea
-            className="textarea textarea-bordered" rows={3} value={description}
+            className="textarea w-full" rows={3} value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="One or two sentences that appear on the recipe card..."
           />
         </label>
-        <label className="form-control">
-          <span className="label-text font-semibold mb-1">Kratak opis (SR)</span>
+        <label className="fieldset">
+          <span className="fieldset-legend justify-start">Kratak opis (SR)</span>
           <textarea
-            className="textarea textarea-bordered" rows={3} value={descriptionSr}
+            className="textarea w-full" rows={3} value={descriptionSr}
             onChange={(e) => setDescriptionSr(e.target.value)}
           />
         </label>
@@ -206,12 +206,12 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
       {imageUrl && <ImageFramer url={imageUrl} value={cover} onChange={setCover} />}
 
       {/* Video */}
-      <label className="form-control">
-        <span className="label-text font-semibold mb-1">
+      <label className="fieldset">
+        <span className="fieldset-legend justify-start">
           Video URL <span className="opacity-50 font-normal">(optional — .mp4 / Cloudinary link)</span>
         </span>
         <input
-          type="url" className="input input-bordered text-sm" value={videoUrl}
+          type="url" className="input w-full text-sm" value={videoUrl}
           onChange={(e) => setVideoUrl(e.target.value)}
           placeholder="https://res.cloudinary.com/…/video.mp4"
         />
@@ -221,9 +221,9 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
       </label>
 
       {/* Category */}
-      <label className="form-control">
-        <span className="label-text font-semibold mb-1">Category</span>
-        <select className="select select-bordered" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+      <label className="fieldset">
+        <span className="fieldset-legend justify-start">Category</span>
+        <select className="select w-full" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
           <option value="">— No category —</option>
           {categories.map((c) => (
             <option key={c.id} value={c.id}>{c.name}</option>
@@ -233,18 +233,18 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
 
       {/* Ingredients */}
       <div>
-        <p className="label-text font-semibold mb-1">Ingredients <span className="opacity-50 font-normal">(EN | SR)</span></p>
+        <p className="fieldset-legend justify-start">Ingredients <span className="opacity-50 font-normal">(EN | SR)</span></p>
         <p className="text-xs opacity-60 mb-2">Tip: start a line with <code>##</code> to make a section heading, e.g. <code>## For the crust</code>.</p>
         {ingredients.map((ing, i) => (
           <div key={i} className="flex gap-2 mb-2 items-center">
             <span className="text-xs opacity-50 w-5 text-right flex-shrink-0">{i + 1}.</span>
             <input
-              type="text" className="input input-bordered input-sm flex-1 min-w-0"
+              type="text" className="input input-sm flex-1 min-w-0"
               value={ing.text} placeholder="e.g. 200 g almond flour"
               onChange={(e) => updateLine(ingredients, i, 'text', e.target.value, setIngredients)}
             />
             <input
-              type="text" className="input input-bordered input-sm flex-1 min-w-0"
+              type="text" className="input input-sm flex-1 min-w-0"
               value={ing.textSr} placeholder="npr. 200 g bademovog brašna"
               onChange={(e) => updateLine(ingredients, i, 'textSr', e.target.value, setIngredients)}
             />
@@ -262,17 +262,17 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
 
       {/* Steps */}
       <div>
-        <p className="label-text font-semibold mb-2">Steps <span className="opacity-50 font-normal">(EN | SR)</span></p>
+        <p className="fieldset-legend justify-start">Steps <span className="opacity-50 font-normal">(EN | SR)</span></p>
         {steps.map((step, i) => (
           <div key={i} className="flex gap-2 mb-2 items-start">
             <span className="text-xs opacity-50 w-5 text-right flex-shrink-0 mt-2">{i + 1}.</span>
             <textarea
-              className="textarea textarea-bordered textarea-sm flex-1 min-w-0" rows={3}
+              className="textarea textarea-sm flex-1 min-w-0" rows={3}
               value={step.text} placeholder={`Step ${i + 1}...`}
               onChange={(e) => updateLine(steps, i, 'text', e.target.value, setSteps)}
             />
             <textarea
-              className="textarea textarea-bordered textarea-sm flex-1 min-w-0" rows={3}
+              className="textarea textarea-sm flex-1 min-w-0" rows={3}
               value={step.textSr} placeholder={`Korak ${i + 1}...`}
               onChange={(e) => updateLine(steps, i, 'textSr', e.target.value, setSteps)}
             />
@@ -290,7 +290,7 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
 
       {/* Gallery Images */}
       <div>
-        <p className="label-text font-semibold mb-2">
+        <p className="fieldset-legend justify-start">
           More Photos
           <span className="opacity-50 font-normal ml-2 text-xs">(optional — shown with the arrows in the photo slider next to the title)</span>
         </p>
@@ -310,7 +310,7 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
             )}
             <input
               type="text"
-              className="input input-bordered input-sm"
+              className="input input-sm w-full"
               placeholder="Caption (optional)"
               value={img.caption}
               onChange={(e) => updateGalleryCaption(i, e.target.value)}
@@ -332,7 +332,7 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
           type="checkbox" className="toggle toggle-primary"
           checked={published} onChange={(e) => setPublished(e.target.checked)}
         />
-        <span className="label-text">
+        <span className="text-sm">
           {published ? '🟢 Published (visible on site)' : '🟡 Draft (hidden from visitors)'}
         </span>
       </label>
@@ -343,7 +343,7 @@ export default function RecipeForm({ initial, categories, onSave, onCancel }: Pr
           type="checkbox" className="toggle toggle-warning"
           checked={featured} onChange={(e) => setFeatured(e.target.checked)}
         />
-        <span className="label-text">
+        <span className="text-sm">
           {featured ? '⭐ Shown in the homepage slider' : 'Not on the homepage'}
         </span>
       </label>

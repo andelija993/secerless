@@ -59,17 +59,14 @@ function isActive(href: string) {
     </ul>
 
     <div class="flex items-center gap-1">
-      <!-- Language switch -->
-      <div class="flex items-center rounded-full bg-base-200/70 p-0.5 text-xs font-semibold" role="group" aria-label="Language">
+      <!-- Language switch (daisyUI join) -->
+      <div class="join" role="group" aria-label="Language">
         {langLinks.map((l) => (
           <a
             href={l.href}
             hreflang={l.code}
             aria-current={lang === l.code ? 'true' : undefined}
-            class:list={[
-              'rounded-full px-2.5 py-1.5 transition-colors',
-              lang === l.code ? 'bg-primary text-primary-content shadow-sm' : 'opacity-70 hover:opacity-100',
-            ]}
+            class:list={['join-item btn btn-xs sm:btn-sm', lang === l.code ? 'btn-primary' : 'btn-ghost']}
           >
             {l.label}
           </a>
