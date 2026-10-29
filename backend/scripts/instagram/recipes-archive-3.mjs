@@ -351,7 +351,7 @@ export default [
       ['Add a cheese slice a few minutes before the end, then assemble in buns.', 'Par minuta pre kraja dodati listić sira, pa složiti u zemičke.'],
     ],
   },
-  // ---------- reels ----------
+  // Reels
   {
     ig: 'ig2-x70', slug: 'lazy-pita-pizza-two-ways', cat: 'dinner',
     title: ['Lazy Pita Pizza Two Ways', 'Lenja pica na dva načina'],

@@ -1,6 +1,4 @@
-// Prisma 7 moved CLI/migration configuration out of schema.prisma and into
-// this dedicated config file. The PrismaClient itself (used in our app code,
-// see src/lib/prisma.js) is configured separately via a driver adapter.
+// Prisma CLI/migration config (the app's client is set up in src/lib/prisma.js)
 import 'dotenv/config';
 import { defineConfig, env } from 'prisma/config';
 

@@ -1,8 +1,7 @@
 // Create the "Healthy Desserts" category and move sugar-free desserts into it.
 // Usage: node scripts/healthy-desserts.mjs [--apply]
-import dotenv from 'dotenv';
-dotenv.config();
-const { default: prisma } = await import('../src/lib/prisma.js');
+import prisma from '../src/lib/prisma.js';
+
 const APPLY = process.argv.includes('--apply');
 
 // Ingredients that mean "contains (refined) sugar"

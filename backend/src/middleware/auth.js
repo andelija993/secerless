@@ -2,25 +2,17 @@ import prisma from '../lib/prisma.js';
 import { cached } from '../lib/cache.js';
 import { COOKIE_NAME, verifyToken } from '../utils/token.js';
 
-// Reads the JWT cookie (if present) and attaches the matching user to
-// req.user. Runs on EVERY request so any route can check `req.user` —
-// it never blocks the request itself, it just tells us who (if anyone)
-// is logged in. Use `requireAuth`/`requireAdmin` below to actually
-// protect a route.
+// Attaches the logged-in user (or null) to req.user; never blocks the request
 export async function authenticate(req, res, next) {
   req.user = null;
-  try {
-    const token = req.cookies?.[COOKIE_NAME];
-    if (!token) return next();
-
-    const payload = verifyToken(token);
-    // Cached briefly so logged-in users don't pay a DB round trip on every request
-    const user = await cached(`user:${payload.sub}`, () => prisma.user.findUnique({ where: { id: payload.sub } }), 30_000);
-    req.user = user || null;
-  } catch (err) {
-    // Expired or tampered token — just treat the request as logged-out
-    // rather than throwing an error.
-    req.user = null;
+  const token = req.cookies?.[COOKIE_NAME];
+  if (token) {
+    try {
+      const { sub } = verifyToken(token);
+      req.user = await cached(`user:${sub}`, () => prisma.user.findUnique({ where: { id: sub } }), 30_000);
+    } catch {
+      // invalid or expired token → treat as logged out
+    }
   }
   next();
 }

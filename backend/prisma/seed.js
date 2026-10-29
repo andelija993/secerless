@@ -1,6 +1,7 @@
 import pkg from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import bcrypt from 'bcrypt';
+import crypto from 'node:crypto';
 import dotenv from 'dotenv';
 
 const { PrismaClient } = pkg;
@@ -10,14 +11,19 @@ dotenv.config();
 const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
 const prisma = new PrismaClient({ adapter });
 
+// Credentials come from .env; without a password a random one is generated so no default login exists
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'admin@secerless.dev';
+const generatedPassword = process.env.ADMIN_PASSWORD ? null : crypto.randomBytes(12).toString('base64url');
+
 async function main() {
-  // --- Admin user (for testing Phase 3 auth + Phase 5 admin dashboard) ---
-  const adminPassword = await bcrypt.hash('admin123', 10);
+  // Only applied when the admin is first created; an existing admin keeps their password
+  const adminExisted = !!(await prisma.user.findUnique({ where: { email: ADMIN_EMAIL } }));
+  const adminPassword = await bcrypt.hash(process.env.ADMIN_PASSWORD || generatedPassword, 10);
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@secerless.dev' },
+    where: { email: ADMIN_EMAIL },
     update: {},
     create: {
-      email: 'admin@secerless.dev',
+      email: ADMIN_EMAIL,
       password: adminPassword,
       firstName: 'Admin',
       lastName: 'User',
@@ -25,7 +31,7 @@ async function main() {
     },
   });
 
-  // --- Categories (canonical set) ---
+  // Categories (canonical set)
   await prisma.category.upsert({
     where: { slug: 'breakfast' },
     update: { name: 'Breakfast' },
@@ -62,7 +68,7 @@ async function main() {
     create: { name: 'Ice Cream', slug: 'ice-cream' },
   });
 
-  // --- Recipes (matching the placeholders already in the frontend) ---
+  // Sample recipes
   await prisma.recipe.upsert({
     where: { slug: 'garlic-butter-pasta' },
     update: {},
@@ -122,7 +128,7 @@ async function main() {
     },
   });
 
-  // --- Blog posts ---
+  // Sample blog posts
   await prisma.blogPost.upsert({
     where: { slug: 'why-i-started-cooking' },
     update: {},
@@ -264,7 +270,10 @@ If you cook with intention and patience, even the simplest meals can become some
     },
   });
 
-  console.log('✅ Seed complete. Admin login: admin@secerless.dev / admin123');
+  console.log('✅ Seed complete.');
+  if (adminExisted) console.log(`Admin ${ADMIN_EMAIL} already existed — password unchanged.`);
+  else if (generatedPassword) console.log(`Admin created: ${ADMIN_EMAIL} / ${generatedPassword} (shown once — save it)`);
+  else console.log(`Admin created: ${ADMIN_EMAIL} (password from ADMIN_PASSWORD)`);
 }
 
 main()

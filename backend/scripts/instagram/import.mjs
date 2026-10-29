@@ -38,7 +38,7 @@ const PUBLISH = !!args.publish;
 const FORCE = !!args.force;
 const ONLY = args.only ? new Set(String(args.only).split(',')) : null;
 const EXPORT_DIR = args.export || '/tmp/ig_export';
-const ADMIN_EMAIL = args.admin || 'admin@secerless.dev';
+const ADMIN_EMAIL = args.admin || process.env.ADMIN_EMAIL || 'admin@secerless.dev';
 
 const readJson = (f) => JSON.parse(fs.readFileSync(path.join(__dirname, f), 'utf8'));
 // media2.json entries carry their own export `dir`
@@ -60,7 +60,7 @@ function mediaFor(r) {
   return { date: own.date, images, video: videos[0] || null };
 }
 
-// ---------- validation ----------
+// Validate every recipe and its media before touching the database
 let problems = 0;
 const slugs = new Set();
 for (const r of recipes) {
@@ -94,7 +94,7 @@ if (DRY) {
   process.exit(0);
 }
 
-// ---------- import ----------
+// Imported lazily so --dry-run works without a database connection
 const { default: prisma } = await import('../../src/lib/prisma.js');
 
 cloudinary.config({
