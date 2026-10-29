@@ -81,7 +81,7 @@ Netlify proxies `/api/*` to the backend, so the browser only talks to one domain
 3. **Admin password:** set a strong one with `node scripts/set-password.mjs <admin email>` (from `backend/`; it prompts for the new password).
 4. **Frontend (Netlify):** Add new site → import this repository. Set **Base directory** to `frontend`; the build settings come from `netlify.toml`.
    - Add the environment variable `API_URL=https://<service>.onrender.com/api`.
-   - If the Render service isn't called `secerless-api`, update the proxy target in `netlify.toml`.
+   - If the Render service isn't called `secerless`, update the proxy target in `netlify.toml`.
 5. **Auto-publish:** in Netlify → Site configuration → Build hooks, create a hook. Set its URL as `NETLIFY_BUILD_HOOK` on Render. Admin edits are then published automatically about a minute later.
 
 Notes:

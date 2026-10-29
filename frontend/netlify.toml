@@ -7,14 +7,14 @@
   NODE_VERSION = "22"
   # Browser calls go to the same origin and are proxied below
   PUBLIC_API_URL = "/api"
-  # Set API_URL (the backend's absolute URL, e.g. https://secerless-api.onrender.com/api)
+  # Set API_URL (the backend's absolute URL: https://secerless.onrender.com/api)
   # in Netlify → Site configuration → Environment variables; the build fetches content from it.
 
 # Same-origin proxy to the backend so the httpOnly login cookie is first-party.
-# Replace the host if your Render service has a different name.
+# Replace the host if the Render service address changes.
 [[redirects]]
   from = "/api/*"
-  to = "https://secerless-api.onrender.com/api/:splat"
+  to = "https://secerless.onrender.com/api/:splat"
   status = 200
   force = true
 

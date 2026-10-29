@@ -2,7 +2,7 @@
 # Values marked `sync: false` are entered in the Render dashboard and never stored in git.
 services:
   - type: web
-    name: secerless-api
+    name: secerless
     runtime: node
     plan: free
     rootDir: backend
