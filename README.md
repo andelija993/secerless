@@ -38,8 +38,9 @@ npm run dev             # http://localhost:4000
 | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Image and video hosting |
 | `CONTACT_TO` | Where contact-form messages are emailed |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` | Outgoing mail. For Gmail, use an App Password. If unset, messages are only saved to the database |
+| `NETLIFY_BUILD_HOOK` | Production only. Admin content changes trigger a site rebuild (debounced 60 s) |
 
-Backend scripts: `dev`, `start`, `db:migrate`, `db:generate`, `db:studio`, `db:seed`.
+Backend scripts: `dev`, `start`, `build` (Prisma generate + apply migrations, used on deploy), `db:migrate`, `db:generate`, `db:studio`, `db:seed`.
 
 Secrets live only in `backend/.env`, which is git-ignored. Never commit it.
 
@@ -51,11 +52,41 @@ npm run dev             # http://localhost:4321
 npm run build           # static build into dist/
 ```
 
-`PUBLIC_API_URL` points to the API (default `http://localhost:4000/api`).
+| Variable | Purpose |
+|---|---|
+| `PUBLIC_API_URL` | API URL used by the browser (default `http://localhost:4000/api`; `/api` in production) |
+| `API_URL` | Absolute API URL used while building pages (defaults to `PUBLIC_API_URL`) |
 
 > The site is built as static pages. Recipe and blog detail pages are generated at build time from
 > **published** content, so publishing new content requires a rebuild. Login, favorites, the profile
 > and the admin dashboard load data in the browser.
+
+## Deployment (free tier)
+
+| Part | Host | Config |
+|---|---|---|
+| Frontend | Netlify | `frontend/netlify.toml` |
+| Backend | Render (free web service) | `render.yaml` |
+| Database | Neon (free PostgreSQL) or any hosted PostgreSQL | `DATABASE_URL` |
+| Media | Cloudinary (free) | `CLOUDINARY_*` |
+
+Netlify proxies `/api/*` to the backend, so the browser only talks to one domain and the httpOnly login cookie stays first-party (browsers block cross-site cookies).
+
+1. **Database:** use a hosted PostgreSQL database (this project uses Neon). For a brand-new database, run `npm run db:seed` once from `backend/` with `DATABASE_URL` pointing at it. Note that the seed also adds sample recipes and posts.
+2. **Backend (Render):** New → Blueprint → select this repository.
+   - Fill in the variables Render asks for. Set `FRONTEND_URL` to the Netlify site URL.
+   - `JWT_SECRET` is generated automatically.
+   - Each deploy runs `npm run build`, which applies pending migrations.
+   - Check `https://<service>.onrender.com/api/health`.
+3. **Admin password:** set a strong one with `node scripts/set-password.mjs <admin email>` (from `backend/`; it prompts for the new password).
+4. **Frontend (Netlify):** Add new site → import this repository. Set **Base directory** to `frontend`; the build settings come from `netlify.toml`.
+   - Add the environment variable `API_URL=https://<service>.onrender.com/api`.
+   - If the Render service isn't called `secerless-api`, update the proxy target in `netlify.toml`.
+5. **Auto-publish:** in Netlify → Site configuration → Build hooks, create a hook. Set its URL as `NETLIFY_BUILD_HOOK` on Render. Admin edits are then published automatically about a minute later.
+
+Notes:
+- Render's free service sleeps after 15 minutes without traffic, so the first request after a pause can take up to a minute.
+- A build fails on purpose if it can't reach the API, so an empty site is never published. Retry the deploy once the backend is awake.
 
 ---
 

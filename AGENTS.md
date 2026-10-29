@@ -159,6 +159,9 @@ The backend **refuses to start** unless `JWT_SECRET` is at least 32 characters a
 - **A saved field "doesn't stick"**: it is missing from the controller whitelist (`recipeData()` / `postData()`).
 - **Lost ingredients/steps/gallery after an edit**: a partial list was sent; child lists are replaced as a whole.
 - **Login works on localhost but not in production**: `FRONTEND_URL` must exactly match the site origin (CORS with credentials), and HTTPS is required for the `secure` cookie.
+- **Production API calls go through the Netlify proxy.** The browser uses the relative `PUBLIC_API_URL=/api` (`frontend/netlify.toml` forwards it to Render), which keeps the login cookie first-party. The build uses the absolute `API_URL`. Never point browser code at the Render URL directly: cross-site cookies are blocked.
+- **A deploy fails with "Build could not load …"**: this is deliberate (`assertBuildFetch` in `lib/api.ts`) so an unreachable API never publishes an empty site. Render's free service may have been asleep; retry.
+- **Admin edits go live via a rebuild.** `lib/rebuild.js` calls `NETLIFY_BUILD_HOOK` 60 s after the last content write. New content routes must match `SITE_CONTENT` in `server.js` to trigger it.
 - **Upload rejected**: `/api/upload` accepts `image/*` only, max 25 MB. Videos are referenced by URL (`videoUrl`).
 - **Contact emails not arriving**: `CONTACT_TO`, `SMTP_USER` and `SMTP_PASS` must all be set; otherwise messages are only stored as `Comment` rows (view them with `db:studio`).
 - **Several edits to the same file at once can overwrite each other.** Make edits to one file sequentially and re-read it to confirm they landed.
