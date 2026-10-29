@@ -1,4 +1,10 @@
-export const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:4000/api';
+const PUBLIC_API = import.meta.env.PUBLIC_API_URL || 'http://localhost:4000/api';
+
+// In production the browser calls the relative `/api` (Netlify proxies it to the backend), so the
+// login cookie stays first-party. The build runs in Node and needs the backend's absolute URL instead
+// (`API_URL`, read from .env or the host's environment variables).
+const BUILD_API = import.meta.env.API_URL || (globalThis as any).process?.env?.API_URL;
+export const API_URL: string = import.meta.env.SSR ? BUILD_API || PUBLIC_API : PUBLIC_API;
 
 type Lang = 'en' | 'sr';
 
@@ -99,8 +105,14 @@ function localizeRecipe<T extends RecipeSummary>(recipe: T, lang: Lang): T {
   return r;
 }
 
+// During the build an unreachable API must fail the deploy instead of publishing an empty site
+function assertBuildFetch(ok: boolean, status: number, path: string) {
+  if (!ok && import.meta.env.SSR) throw new Error(`Build could not load ${API_URL}${path} (status ${status})`);
+}
+
 export async function getRecipes(lang: Lang = 'en'): Promise<RecipeSummary[]> {
-  const { ok, data } = await request<RecipeSummary[]>('/recipes');
+  const { ok, status, data } = await request<RecipeSummary[]>('/recipes');
+  assertBuildFetch(ok, status, '/recipes');
   return ok ? data.map((r) => localizeRecipe(r, lang)) : [];
 }
 
@@ -110,7 +122,8 @@ export async function getRecipeBySlug(slug: string, lang: Lang = 'en'): Promise<
 }
 
 export async function getPosts(): Promise<BlogPostSummary[]> {
-  const { ok, data } = await request<BlogPostSummary[]>('/blog');
+  const { ok, status, data } = await request<BlogPostSummary[]>('/blog');
+  assertBuildFetch(ok, status, '/blog');
   return ok ? data : [];
 }
 
