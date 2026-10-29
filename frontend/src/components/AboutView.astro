@@ -1,5 +1,4 @@
 ---
-// AboutView — shared About page for EN (/about) and SR (/sr/about).
 import { useTranslatedPath, type Lang } from '../i18n/utils';
 
 interface Props {
@@ -53,12 +52,9 @@ const content = {
   },
 }[isSr ? 'sr' : 'en'];
 
-// Portrait (frontend/public/about/). Set to null to show the placeholder instead.
 const portrait: string | null = '/about/andjelija.jpg';
-
 ---
 
-<!-- Intro -->
 <section class="max-w-4xl mx-auto px-4 pt-12 md:pt-20 pb-4">
   <div class="reveal flex flex-col items-center gap-10 text-center md:flex-row md:items-center md:text-left">
     <div class="shrink-0 h-48 w-48 md:h-60 md:w-60 overflow-hidden rounded-full ring-8 ring-base-200 shadow-xl bg-base-200 flex items-center justify-center">
@@ -78,7 +74,6 @@ const portrait: string | null = '/about/andjelija.jpg';
   </div>
 </section>
 
-<!-- Story -->
 <section class="max-w-3xl mx-auto px-4 py-12 md:py-16">
   <div class="space-y-6 text-lg leading-[1.85] opacity-90">
     {content.paragraphs.map((p, i) => (
@@ -97,7 +92,6 @@ const portrait: string | null = '/about/andjelija.jpg';
   <p class="reveal mt-6 font-display text-3xl italic text-primary">— {content.signature} ♥</p>
 </section>
 
-<!-- Values -->
 <section class="max-w-6xl mx-auto px-4 pb-24">
   <div class="grid gap-6 md:grid-cols-3">
     {content.values.map((v, i) => (

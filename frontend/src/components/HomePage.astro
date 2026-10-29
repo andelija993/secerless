@@ -1,9 +1,8 @@
 ---
-// HomePage — shared homepage for EN (/) and SR (/sr).
 import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
 import { getRecipes, getPosts } from '../lib/api';
 import TopRecipesSlider from './TopRecipesSlider';
-import { coverFraming, frameCss, DEFAULT_FRAMING, optimizeImage } from '../lib/imageFrame';
+import { coverPos, posCss, optimizeImage } from '../lib/image';
 
 interface Props {
   lang: Lang;
@@ -15,25 +14,19 @@ const translatePath = useTranslatedPath(lang);
 const isSr = lang === 'sr';
 
 const [recipes, posts] = await Promise.all([getRecipes(lang), getPosts()]);
-// Slider: recipes marked ⭐ "featured" in the admin (in the admin order); fallback = first 5
 const featured = recipes.filter((r) => r.featured);
 const topRecipes = featured.length ? featured : recipes.slice(0, 5);
-// Latest recipes: newest by date, regardless of the manual order
-const latestRecipes = [...recipes]
-  .sort((a, b) => +new Date(b.createdAt ?? 0) - +new Date(a.createdAt ?? 0))
-  .slice(0, 6);
+const POPULAR_COUNT = 3;
 const latestPosts = posts.slice(0, 3);
 
 const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=900';
-// Collage photos keep the framing chosen in the admin
 const heroImages = [
   ...[...featured, ...recipes.filter((r) => !r.featured)]
     .filter((r) => r.imageUrl)
-    .map((r) => ({ url: optimizeImage(r.imageUrl as string, 900), style: frameCss(coverFraming(r)) })),
-  ...Array(3).fill({ url: FALLBACK, style: frameCss(DEFAULT_FRAMING) }),
+    .map((r) => ({ url: optimizeImage(r.imageUrl as string, 900), style: posCss(coverPos(r)) })),
+  ...Array(3).fill({ url: FALLBACK, style: posCss(50) }),
 ].slice(0, 3) as { url: string; style: string }[];
 
-// Unique categories that actually have recipes, with a count
 const emoji: Record<string, string> = {
   breakfast: '🥞',
   lunch: '🥗',
@@ -65,7 +58,6 @@ const fmtDate = (d: string) =>
   new Date(d).toLocaleDateString(isSr ? 'sr-Latn-RS' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 ---
 
-<!-- ================= HERO ================= -->
 <section class="relative -mt-[4.5rem] pt-[4.5rem] overflow-hidden bg-blobs">
   <div class="max-w-6xl mx-auto px-4 py-16 md:py-24 grid gap-12 lg:grid-cols-[1.1fr_0.9fr] items-center">
     <div class="reveal">
@@ -107,7 +99,6 @@ const fmtDate = (d: string) =>
       </dl>
     </div>
 
-    <!-- Image collage -->
     <div class="relative h-[420px] sm:h-[500px] reveal" style="--reveal-delay: 150ms">
       <div class="absolute right-0 top-0 h-[78%] w-[68%] overflow-hidden rounded-[2.5rem] shadow-2xl ring-8 ring-base-100">
         <img src={heroImages[0].url} alt="" class="h-full w-full object-cover" style={heroImages[0].style} />
@@ -130,7 +121,6 @@ const fmtDate = (d: string) =>
   </div>
 </section>
 
-<!-- ================= CATEGORIES ================= -->
 {categories.length > 0 && (
   <section class="max-w-6xl mx-auto px-4 pt-8 pb-4">
     <div class="reveal">
@@ -155,7 +145,6 @@ const fmtDate = (d: string) =>
   </section>
 )}
 
-<!-- ================= FEATURED RECIPES ================= -->
 <section class="max-w-6xl mx-auto px-4 py-20">
   <div class="flex flex-wrap items-end justify-between gap-4 mb-10 reveal">
     <div>
@@ -174,23 +163,22 @@ const fmtDate = (d: string) =>
   )}
 </section>
 
-<!-- ================= LATEST STORIES (bento) ================= -->
-<!-- ================= LATEST RECIPES ================= -->
-{latestRecipes.length > 0 && (
+{recipes.length > 0 && (
   <section class="max-w-6xl mx-auto px-4 pb-20">
     <div class="flex flex-wrap items-end justify-between gap-4 mb-10 reveal">
       <div>
-        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-primary">{isSr ? 'Sveže iz kuhinje' : 'Fresh from the kitchen'}</p>
-        <h2 class="mt-2 text-3xl md:text-4xl font-semibold">{isSr ? 'Najnoviji recepti' : 'Latest recipes'}</h2>
+        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-primary">{t('home.popularEyebrow')}</p>
+        <h2 class="mt-2 text-3xl md:text-4xl font-semibold">{t('home.popularTitle')}</h2>
       </div>
       <a href={translatePath('/recipes')} class="link link-hover text-primary font-medium">{t('home.allRecipes')}</a>
     </div>
-    <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {latestRecipes.map((r, i) => (
+    <div id="popular-recipes" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" data-count={POPULAR_COUNT}>
+      {recipes.map((r, i) => (
         <a
           href={translatePath(`/recipes/${r.slug}`)}
           class="reveal group overflow-hidden rounded-[2rem] border border-base-300 bg-base-100 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
           style={`--reveal-delay: ${(i % 3) * 80}ms`}
+          hidden={i >= POPULAR_COUNT}
         >
           <figure class="relative aspect-[4/3] overflow-hidden">
             <img
@@ -199,7 +187,7 @@ const fmtDate = (d: string) =>
               loading="lazy"
               decoding="async"
               class="h-full w-full object-cover transition-[scale] duration-700 group-hover:scale-110"
-              style={frameCss(coverFraming(r))}
+              style={posCss(coverPos(r))}
             />
             {r.category && (
               <span class="absolute left-4 top-4 rounded-full glass-surface px-3 py-1 text-xs font-semibold">{r.category.name}</span>
@@ -210,13 +198,34 @@ const fmtDate = (d: string) =>
           </figure>
           <div class="p-5">
             <h3 class="text-lg font-semibold leading-snug group-hover:text-primary transition-colors">{r.title}</h3>
-            {r.createdAt && <p class="mt-1 text-xs opacity-50">{fmtDate(r.createdAt)}</p>}
+            {r.description && <p class="mt-1 text-sm opacity-60 line-clamp-2">{r.description}</p>}
           </div>
         </a>
       ))}
     </div>
   </section>
 )}
+
+<script>
+  // Pick a fresh random set of recipe cards on every page load (Fisher–Yates shuffle)
+  function showRandomRecipes() {
+    const grid = document.getElementById('popular-recipes');
+    if (!grid) return;
+    const cards = Array.from(grid.children) as HTMLElement[];
+    for (let i = cards.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [cards[i], cards[j]] = [cards[j], cards[i]];
+    }
+    const count = Number(grid.dataset.count) || 3;
+    cards.forEach((card, i) => {
+      card.hidden = i >= count;
+      card.style.setProperty('--reveal-delay', `${(i % 3) * 80}ms`);
+      grid.appendChild(card);
+    });
+  }
+  showRandomRecipes();
+  document.addEventListener('astro:after-swap', showRandomRecipes);
+</script>
 
 {latestPosts.length > 0 && (
   <section class="max-w-6xl mx-auto px-4 pb-20">
@@ -259,7 +268,6 @@ const fmtDate = (d: string) =>
   </section>
 )}
 
-<!-- ================= INSTAGRAM CTA ================= -->
 <section class="max-w-6xl mx-auto px-4">
   <div class="reveal relative overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-primary via-primary to-secondary px-8 py-14 md:px-16 text-primary-content shadow-2xl shadow-primary/20">
     <div class="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-2xl"></div>

@@ -1,7 +1,3 @@
-// Small typed helper for talking to the Express/Prisma backend.
-// Centralizing fetch logic here means every page uses the same base URL,
-// error handling, and TypeScript types instead of repeating fetch() everywhere.
-
 export const API_URL = import.meta.env.PUBLIC_API_URL || 'http://localhost:4000/api';
 
 type Lang = 'en' | 'sr';
@@ -20,9 +16,7 @@ export interface RecipeSummary {
   description: string | null;
   descriptionSr?: string | null;
   imageUrl: string | null;
-  imagePosX?: number;
   imagePosY?: number;
-  imageZoom?: number;
   videoUrl?: string | null;
   createdAt?: string;
   position?: number;
@@ -40,7 +34,7 @@ export interface RecipeLine {
 export interface RecipeDetail extends RecipeSummary {
   ingredients: RecipeLine[];
   steps: RecipeLine[];
-  images: { id: string; url: string; caption: string | null; order: number; posX?: number; posY?: number; zoom?: number }[];
+  images: { id: string; url: string; caption: string | null; order: number; posY?: number }[];
   author: { firstName: string | null; lastName: string | null };
 }
 
@@ -56,23 +50,30 @@ export interface BlogPostSummary {
   author: { firstName: string | null; lastName: string | null };
 }
 
-// Generic fetch wrapper — returns `null` instead of throwing so a single
-// backend hiccup doesn't crash the whole page (we just show an empty state).
-async function apiFetch<T>(path: string): Promise<T | null> {
+export interface ApiResult<T = any> {
+  ok: boolean;
+  status: number;
+  data: T;
+}
+
+// Shared fetch for every API call: sends the auth cookie and never throws
+export async function request<T = any>(path: string, method = 'GET', body?: unknown): Promise<ApiResult<T>> {
   try {
-    const res = await fetch(`${API_URL}${path}`);
-    if (!res.ok) return null;
-    return (await res.json()) as T;
+    const res = await fetch(`${API_URL}${path}`, {
+      method,
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const data = res.status === 204 ? null : await res.json().catch(() => null);
+    return { ok: res.ok, status: res.status, data };
   } catch (err) {
     console.error(`API request failed: ${path}`, err);
-    return null;
+    return { ok: false, status: 0, data: { error: 'Cannot reach the server. Is the backend running?' } as T };
   }
 }
 
-const pick = (sr: string | null | undefined, en: string) => (sr && sr.trim() ? sr : en);
-
-// Serbian names for categories (the DB stores English names)
-export const CATEGORY_SR: Record<string, string> = {
+const CATEGORY_SR: Record<string, string> = {
   breakfast: 'Doručak',
   lunch: 'Ručak',
   dinner: 'Večera',
@@ -82,39 +83,39 @@ export const CATEGORY_SR: Record<string, string> = {
   'ice-cream': 'Sladoled',
 };
 
-// Swap in the Serbian fields (when present) so components can always read
-// `title`, `description`, `text` regardless of language. English is the fallback.
-export function localizeRecipe<T extends RecipeSummary>(recipe: T, lang: Lang): T {
+const pick = (sr: string | null | undefined, en: string) => (sr?.trim() ? sr : en);
+
+function localizeRecipe<T extends RecipeSummary>(recipe: T, lang: Lang): T {
   if (lang !== 'sr') return recipe;
+  const lines = (list?: RecipeLine[]) => list?.map((l) => ({ ...l, text: pick(l.textSr, l.text) }));
   const r: any = {
     ...recipe,
     title: pick(recipe.titleSr, recipe.title),
     description: recipe.descriptionSr?.trim() ? recipe.descriptionSr : recipe.description,
-    category: recipe.category
-      ? { ...recipe.category, name: CATEGORY_SR[recipe.category.slug] ?? recipe.category.name }
-      : null,
+    category: recipe.category && { ...recipe.category, name: CATEGORY_SR[recipe.category.slug] ?? recipe.category.name },
   };
-  const lines = (list?: RecipeLine[]) => list?.map((l) => ({ ...l, text: pick(l.textSr, l.text) }));
-  if ('ingredients' in recipe) r.ingredients = lines((recipe as any).ingredients);
-  if ('steps' in recipe) r.steps = lines((recipe as any).steps);
-  return r as T;
+  if ('ingredients' in r) r.ingredients = lines(r.ingredients);
+  if ('steps' in r) r.steps = lines(r.steps);
+  return r;
 }
 
 export async function getRecipes(lang: Lang = 'en'): Promise<RecipeSummary[]> {
-  const list = (await apiFetch<RecipeSummary[]>('/recipes')) ?? [];
-  return list.map((r) => localizeRecipe(r, lang));
+  const { ok, data } = await request<RecipeSummary[]>('/recipes');
+  return ok ? data.map((r) => localizeRecipe(r, lang)) : [];
 }
 
 export async function getRecipeBySlug(slug: string, lang: Lang = 'en'): Promise<RecipeDetail | null> {
-  const r = await apiFetch<RecipeDetail>(`/recipes/${slug}`);
-  return r ? localizeRecipe(r, lang) : null;
+  const { ok, data } = await request<RecipeDetail>(`/recipes/${slug}`);
+  return ok ? localizeRecipe(data, lang) : null;
 }
 
 export async function getPosts(): Promise<BlogPostSummary[]> {
-  return (await apiFetch<BlogPostSummary[]>('/blog')) ?? [];
+  const { ok, data } = await request<BlogPostSummary[]>('/blog');
+  return ok ? data : [];
 }
 
 export async function getPostBySlug(slug: string): Promise<BlogPostSummary | null> {
-  return apiFetch<BlogPostSummary>(`/blog/${slug}`);
+  const { ok, data } = await request<BlogPostSummary>(`/blog/${slug}`);
+  return ok ? data : null;
 }
 

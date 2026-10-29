@@ -1,55 +1,35 @@
 import { useEffect, useState } from 'react';
 import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
-import { getMe, logout as apiLogout, type AuthUser } from '../lib/auth';
+import { getMe, logout, type AuthUser } from '../lib/auth';
 
-interface Props {
-  lang: Lang;
-}
+const initials = (u: AuthUser) => ((u.firstName?.[0] ?? '') + (u.lastName?.[0] ?? '')).toUpperCase() || u.email[0].toUpperCase();
 
-
-function getInitials(user: AuthUser) {
-  const a = user.firstName?.[0] ?? '';
-  const b = user.lastName?.[0] ?? '';
-  return (a + b).toUpperCase() || user.email[0].toUpperCase();
-}
-
-export default function ProfileMenu({ lang }: Props) {
+export default function ProfileMenu({ lang }: { lang: Lang }) {
   const t = useTranslations(lang);
   const translatePath = useTranslatedPath(lang);
-
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Ask the backend "who am I?" — the httpOnly JWT cookie (if any) is sent
-  // automatically by the browser, so we don't need to manage it ourselves.
   useEffect(() => {
-    getMe()
-      .then(setUser)
-      .finally(() => setLoading(false));
+    getMe().then(setUser).finally(() => setLoading(false));
   }, []);
 
-  function handleLogout() {
-    apiLogout().then(() => {
-      setUser(null);
-      window.location.href = translatePath('/');
-    });
+  async function handleLogout() {
+    await logout();
+    window.location.href = translatePath('/');
   }
 
-  const displayName = user
-    ? user.firstName || user.lastName
-      ? `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim()
-      : user.email
-    : t('profile.guest');
+  const fullName = user && `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim();
+  const displayName = user ? fullName || user.email : t('profile.guest');
 
-  // daisyUI dropdown: opens while the trigger/content has focus, closes on outside click or Esc-blur
   return (
     <div className="dropdown dropdown-end">
       <div
         tabIndex={0}
         role="button"
-        className={`btn btn-circle btn-ghost avatar avatar-placeholder ${loading ? 'pointer-events-none' : ''}`}
         aria-label="Open profile menu"
         aria-haspopup="menu"
+        className={`btn btn-circle btn-ghost avatar avatar-placeholder ${loading ? 'pointer-events-none' : ''}`}
       >
         {loading ? (
           <div className="bg-base-300 rounded-full w-10 animate-pulse" />
@@ -59,7 +39,7 @@ export default function ProfileMenu({ lang }: Props) {
           </div>
         ) : (
           <div className="bg-primary text-primary-content rounded-full w-10 font-semibold">
-            <span>{user ? getInitials(user) : '👤'}</span>
+            <span>{user ? initials(user) : '👤'}</span>
           </div>
         )}
       </div>
@@ -74,9 +54,7 @@ export default function ProfileMenu({ lang }: Props) {
             <ul className="menu w-full p-0">
               <li><a href={translatePath('/profile')}>👤 {t('profile.myProfile')}</a></li>
               <li><a href={translatePath('/favorites')}>❤️ {t('profile.favorites')}</a></li>
-              {user.role === 'ADMIN' && (
-                <li><a href={translatePath('/admin')}>🛠️ {t('profile.admin')}</a></li>
-              )}
+              {user.role === 'ADMIN' && <li><a href={translatePath('/admin')}>🛠️ {t('profile.admin')}</a></li>}
             </ul>
             <div className="divider my-1" />
             <ul className="menu w-full p-0">

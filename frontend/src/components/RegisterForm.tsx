@@ -2,77 +2,43 @@ import { useState } from 'react';
 import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
 import { register } from '../lib/auth';
 
-interface Props {
-  lang: Lang;
-}
-
-export default function RegisterForm({ lang }: Props) {
+export default function RegisterForm({ lang }: { lang: Lang }) {
   const t = useTranslations(lang);
   const translatePath = useTranslatedPath(lang);
-
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const fields = [
+    { name: 'firstName', type: 'text', placeholder: t('register.name') },
+    { name: 'lastName', type: 'text', placeholder: t('register.surname') },
+    { name: 'email', type: 'email', placeholder: t('register.email') },
+    { name: 'password', type: 'password', placeholder: t('register.password'), minLength: 6 },
+  ] as const;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
     setLoading(true);
-
-    const { ok, data } = await register(email, password, firstName, lastName);
-
+    const { ok, data } = await register(form.email, form.password, form.firstName, form.lastName);
     setLoading(false);
-    if (!ok) {
-      setError(data?.error || t('register.genericError'));
-      return;
-    }
-
-    window.location.href = translatePath('/');
+    if (ok) window.location.href = translatePath('/');
+    else setError(data?.error || t('register.genericError'));
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      {error && (
-        <div className="alert alert-error text-sm py-2">
-          <span>{error}</span>
-        </div>
-      )}
-      <input
-        type="text"
-        placeholder={t('register.name')}
-        className="input w-full"
-        value={firstName}
-        onChange={(e) => setFirstName(e.target.value)}
-        required
-      />
-      <input
-        type="text"
-        placeholder={t('register.surname')}
-        className="input w-full"
-        value={lastName}
-        onChange={(e) => setLastName(e.target.value)}
-        required
-      />
-      <input
-        type="email"
-        placeholder={t('register.email')}
-        className="input w-full"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-      />
-      <input
-        type="password"
-        placeholder={t('register.password')}
-        className="input w-full"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        minLength={6}
-        required
-      />
+      {error && <div className="alert alert-error text-sm py-2"><span>{error}</span></div>}
+      {fields.map(({ name, ...props }) => (
+        <input
+          key={name}
+          {...props}
+          className="input w-full"
+          value={form[name]}
+          onChange={(e) => setForm({ ...form, [name]: e.target.value })}
+          required
+        />
+      ))}
       <button type="submit" className="btn btn-primary" disabled={loading}>
         {loading ? t('register.submitting') : t('register.submit')}
       </button>

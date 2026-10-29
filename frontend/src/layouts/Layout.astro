@@ -25,10 +25,7 @@ const lang = getLangFromUrl(Astro.url);
     <meta name="description" content={description} />
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
-    <!--
-      Set the theme BEFORE the page paints, so there's no flash of the
-      wrong theme. Reads saved preference, falls back to OS preference.
-    -->
+
     <script is:inline>
       (function () {
         const saved = localStorage.getItem('secerless_theme');
@@ -45,7 +42,6 @@ const lang = getLangFromUrl(Astro.url);
     </main>
     <Footer />
 
-    <!-- Scroll-reveal: adds .is-visible to every .reveal element when it enters the viewport -->
     <script is:inline>
       (() => {
         const els = document.querySelectorAll('.reveal');

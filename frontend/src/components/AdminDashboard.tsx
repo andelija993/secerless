@@ -1,173 +1,145 @@
-// AdminDashboard — the main React island for the /admin page.
-//
-// On mount it calls GET /api/auth/me to verify the user is ADMIN.
-// If not → shows a "not authorised" screen instead of the CMS.
-//
-// Tabs:
-//   Recipes  — table of all recipes (including drafts), Edit / Delete / New
-//   Blog     — table of all posts  (including drafts), Edit / Delete / New
-//
-// Edit / New opens a DaisyUI modal that renders RecipeForm or BlogForm.
-
 import { useEffect, useRef, useState } from 'react';
 import { getMe, type AuthUser } from '../lib/auth';
 import { showToast } from '../lib/toast';
 import { confirmDialog } from '../lib/confirm';
-import {
-  adminGetAllRecipes,
-  adminGetAllPosts,
-  adminGetCategories,
-  adminCreateRecipe,
-  adminUpdateRecipe,
-  adminDeleteRecipe,
-  adminCreatePost,
-  adminUpdatePost,
-  adminDeletePost,
-  adminBulkRecipes,
-  adminBulkPosts,
-  adminReorderRecipes,
-  type BulkAction,
-} from '../lib/admin';
+import * as api from '../lib/admin';
 import AdminTable, { type AdminRow } from './AdminTable';
-import { coverFraming, frameStyle } from '../lib/imageFrame';
+import { coverPos, posStyle } from '../lib/image';
 import RecipeForm from './RecipeForm';
 import BlogForm from './BlogForm';
 
-type Tab = 'recipes' | 'blog';
+type Kind = 'recipes' | 'blog';
+
+const KINDS = {
+  recipes: { one: 'recipe', many: 'recipes', create: api.adminCreateRecipe, update: api.adminUpdateRecipe, remove: api.adminDeleteRecipe, bulk: api.adminBulkRecipes },
+  blog: { one: 'post', many: 'posts', create: api.adminCreatePost, update: api.adminUpdatePost, remove: api.adminDeletePost, bulk: api.adminBulkPosts },
+};
+
+const BULK_VERB: Record<api.BulkAction, string> = {
+  delete: 'deleted',
+  publish: 'published',
+  unpublish: 'moved to drafts',
+  feature: 'added to the homepage',
+  unfeature: 'removed from the homepage',
+};
 
 export default function AdminDashboard({ lang }: { lang: string }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
-  const [tab, setTab] = useState<Tab>('recipes');
-  const [recipes, setRecipes] = useState<any[]>([]);
-  const [posts, setPosts] = useState<any[]>([]);
+  const [user, setUser] = useState<AuthUser | null | undefined>(undefined); // undefined = checking
+  const [tab, setTab] = useState<Kind>('recipes');
+  const [items, setItems] = useState<Record<Kind, any[]>>({ recipes: [], blog: [] });
   const [categories, setCategories] = useState<any[]>([]);
-  const [dataLoading, setDataLoading] = useState(false);
-
-  // Modal state
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalTab, setModalTab] = useState<Tab>('recipes');
-  const [editingRecipe, setEditingRecipe] = useState<any | null>(null);
-  const [editingPost, setEditingPost] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  // What the modal is editing (item null = creating new); null = modal closed
+  const [editing, setEditing] = useState<{ kind: Kind; item: any | null } | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  // Open/close the native <dialog> whenever modalOpen changes
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (modalOpen && !dialog.open) dialog.showModal();
-    if (!modalOpen && dialog.open) dialog.close();
-  }, [modalOpen]);
-
-  useEffect(() => {
-    getMe().then((u) => {
+    getMe().then(async (u) => {
       setUser(u);
-      setAuthChecked(true);
-      if (u?.role === 'ADMIN') loadData();
+      if (u?.role !== 'ADMIN') return;
+      const [recipes, blog, cats] = await Promise.all([api.adminGetAllRecipes(), api.adminGetAllPosts(), api.adminGetCategories()]);
+      setItems({ recipes, blog });
+      setCategories(cats);
+      setLoading(false);
     });
   }, []);
 
-  async function loadData() {
-    setDataLoading(true);
-    const [r, p, c] = await Promise.all([
-      adminGetAllRecipes(),
-      adminGetAllPosts(),
-      adminGetCategories(),
-    ]);
-    setRecipes(r);
-    setPosts(p);
-    setCategories(c);
-    setDataLoading(false);
-  }
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (editing && !dialog?.open) dialog?.showModal();
+    if (!editing && dialog?.open) dialog.close();
+  }, [editing]);
 
-  async function handleDeleteRecipe(id: string, title: string) {
-    if (!(await confirmDialog(`"${title}" will be permanently deleted.`, { title: 'Delete recipe?' }))) return;
-    const { ok, data } = await adminDeleteRecipe(id);
-    if (ok) {
-      setRecipes((prev) => prev.filter((r) => r.id !== id));
-      showToast('Recipe deleted');
-    } else {
-      showToast(data?.error || 'Failed to delete recipe', 'error');
+  const updateList = (kind: Kind, fn: (list: any[]) => any[]) => setItems((all) => ({ ...all, [kind]: fn(all[kind]) }));
+
+  async function handleSave(data: object) {
+    if (!editing) return { ok: false };
+    const { kind, item } = editing;
+    const { ok, data: saved } = item ? await KINDS[kind].update(item.id, data) : await KINDS[kind].create(data);
+    if (!ok) {
+      showToast(saved?.error || `Failed to save ${KINDS[kind].one}`, 'error');
+      return { ok, error: saved?.error };
     }
+    updateList(kind, (list) => (item ? list.map((x) => (x.id === saved.id ? saved : x)) : [saved, ...list]));
+    setEditing(null);
+    showToast(`${item ? 'Saved' : 'Created'} ${KINDS[kind].one}`);
+    return { ok };
   }
 
-  async function handleDeletePost(id: string, title: string) {
-    if (!(await confirmDialog(`"${title}" will be permanently deleted.`, { title: 'Delete blog post?' }))) return;
-    const { ok, data } = await adminDeletePost(id);
-    if (ok) {
-      setPosts((prev) => prev.filter((p) => p.id !== id));
-      showToast('Blog post deleted');
-    } else {
-      showToast(data?.error || 'Failed to delete post', 'error');
-    }
+  async function handleDelete(kind: Kind, id: string, title: string) {
+    const { one, remove } = KINDS[kind];
+    if (!(await confirmDialog(`"${title}" will be permanently deleted.`, { title: `Delete ${one}?` }))) return;
+    const { ok, data } = await remove(id);
+    if (!ok) return showToast(data?.error || `Failed to delete ${one}`, 'error');
+    updateList(kind, (list) => list.filter((x) => x.id !== id));
+    showToast(`Deleted ${one}`);
   }
 
-  async function handleBulk(kind: Tab, ids: string[], action: BulkAction): Promise<boolean> {
-    const what = kind === 'recipes' ? (ids.length === 1 ? 'recipe' : 'recipes') : ids.length === 1 ? 'post' : 'posts';
-    if (
-      action === 'delete' &&
-      !(await confirmDialog(`${ids.length} ${what} will be permanently deleted. This cannot be undone.`, {
-        title: `Delete ${ids.length} ${what}?`,
-      }))
-    )
+  async function handleBulk(kind: Kind, ids: string[], action: api.BulkAction) {
+    const what = ids.length === 1 ? KINDS[kind].one : KINDS[kind].many;
+    if (action === 'delete' && !(await confirmDialog(`This cannot be undone.`, { title: `Delete ${ids.length} ${what}?` }))) {
       return false;
-    const { ok, data } = kind === 'recipes' ? await adminBulkRecipes(ids, action) : await adminBulkPosts(ids, action);
+    }
+    const { ok, data } = await KINDS[kind].bulk(ids, action);
     if (!ok) {
       showToast(data?.error || 'Bulk action failed', 'error');
       return false;
     }
-    const idSet = new Set(ids);
-    const patchFor = (): Record<string, boolean> =>
-      action === 'feature' || action === 'unfeature'
-        ? { featured: action === 'feature' }
-        : { published: action === 'publish' };
-    const apply = (list: any[]) =>
-      action === 'delete'
-        ? list.filter((x) => !idSet.has(x.id))
-        : list.map((x) => (idSet.has(x.id) ? { ...x, ...patchFor() } : x));
-    if (kind === 'recipes') setRecipes(apply);
-    else setPosts(apply);
-    const verb = {
-      delete: 'deleted',
-      publish: 'published',
-      unpublish: 'moved to drafts',
-      feature: 'added to the homepage',
-      unfeature: 'removed from the homepage',
-    }[action];
-    showToast(`${data?.count ?? ids.length} ${what} ${verb}`);
+    const selected = new Set(ids);
+    const patch = action === 'feature' || action === 'unfeature' ? { featured: action === 'feature' } : { published: action === 'publish' };
+    updateList(kind, (list) =>
+      action === 'delete' ? list.filter((x) => !selected.has(x.id)) : list.map((x) => (selected.has(x.id) ? { ...x, ...patch } : x))
+    );
+    showToast(`${data?.count ?? ids.length} ${what} ${BULK_VERB[action]}`);
     return true;
   }
 
   async function handleToggleFeatured(id: string, featured: boolean) {
-    const { ok, data } = await adminUpdateRecipe(id, { featured });
-    if (!ok) {
-      showToast(data?.error || 'Failed to update recipe', 'error');
-      return;
-    }
-    setRecipes((prev) => prev.map((r) => (r.id === id ? { ...r, featured } : r)));
+    const { ok, data } = await api.adminUpdateRecipe(id, { featured });
+    if (!ok) return showToast(data?.error || 'Failed to update recipe', 'error');
+    updateList('recipes', (list) => list.map((r) => (r.id === id ? { ...r, featured } : r)));
     showToast(featured ? '⭐ Shown on the homepage' : 'Removed from the homepage');
   }
 
-  async function handleReorder(ids: string[]): Promise<boolean> {
-    const { ok, data } = await adminReorderRecipes(ids);
+  async function handleReorder(ids: string[]) {
+    const { ok, data } = await api.adminReorderRecipes(ids);
     if (!ok) {
       showToast(data?.error || 'Failed to save the order', 'error');
       return false;
     }
     const pos = new Map(ids.map((id, i) => [id, i + 1]));
-    setRecipes((prev) =>
-      prev.map((r) => ({ ...r, position: pos.get(r.id) ?? r.position })).sort((x, y) => x.position - y.position)
+    updateList('recipes', (list) =>
+      list.map((r) => ({ ...r, position: pos.get(r.id) ?? r.position })).sort((a, b) => a.position - b.position)
     );
     showToast('Recipe order saved');
     return true;
   }
 
-  const recipeRows: AdminRow[] = recipes.map((r) => ({
+  if (user === undefined) {
+    return (
+      <div className="flex justify-center items-center py-32">
+        <span className="loading loading-spinner loading-lg text-primary" />
+      </div>
+    );
+  }
+
+  if (user?.role !== 'ADMIN') {
+    return (
+      <div className="flex flex-col items-center py-32 gap-4 text-center px-4">
+        <span className="text-5xl">🔒</span>
+        <h2 className="text-2xl font-bold">Admin access required</h2>
+        <p className="opacity-60">Log in with an admin account to reach this page.</p>
+        <a href={lang === 'sr' ? '/sr/login' : '/login'} className="btn btn-primary mt-2">Log In</a>
+      </div>
+    );
+  }
+
+  const recipeRows: AdminRow[] = items.recipes.map((r) => ({
     id: r.id,
     title: r.title,
     slug: r.slug,
     image: r.imageUrl,
-    imageStyle: frameStyle(coverFraming(r)),
+    imageStyle: posStyle(coverPos(r)),
     date: r.createdAt,
     published: r.published,
     featured: r.featured,
@@ -175,7 +147,7 @@ export default function AdminDashboard({ lang }: { lang: string }) {
     meta: `${r.ingredients?.filter((i: any) => !i.text?.startsWith('## ')).length ?? 0} ingredients${r.videoUrl ? ' · ▶ video' : ''}`,
   }));
 
-  const postRows: AdminRow[] = posts.map((p) => ({
+  const postRows: AdminRow[] = items.blog.map((p) => ({
     id: p.id,
     title: p.title,
     slug: p.slug,
@@ -185,149 +157,29 @@ export default function AdminDashboard({ lang }: { lang: string }) {
     meta: p.titleSr ? 'EN + SR' : 'EN only',
   }));
 
-  function openNewRecipe() {
-    setEditingRecipe(null);
-    setModalTab('recipes');
-    setModalOpen(true);
-  }
-
-  function openEditRecipe(recipe: any) {
-    setEditingRecipe(recipe);
-    setModalTab('recipes');
-    setModalOpen(true);
-  }
-
-  function openNewPost() {
-    setEditingPost(null);
-    setModalTab('blog');
-    setModalOpen(true);
-  }
-
-  function openEditPost(post: any) {
-    setEditingPost(post);
-    setModalTab('blog');
-    setModalOpen(true);
-  }
-
-  function closeModal() {
-    setModalOpen(false);
-    setEditingRecipe(null);
-    setEditingPost(null);
-  }
-
-  async function handleSaveRecipe(data: object) {
-    if (editingRecipe) {
-      const { ok, data: updated } = await adminUpdateRecipe(editingRecipe.id, data);
-      if (ok) {
-        setRecipes((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
-        closeModal();
-        showToast('Recipe saved successfully');
-      } else {
-        showToast(updated?.error || 'Failed to save recipe', 'error');
-      }
-      return { ok, error: ok ? undefined : updated?.error };
-    } else {
-      const { ok, data: created } = await adminCreateRecipe(data);
-      if (ok) {
-        setRecipes((prev) => [created, ...prev]);
-        closeModal();
-        showToast('Recipe created successfully');
-      } else {
-        showToast(created?.error || 'Failed to create recipe', 'error');
-      }
-      return { ok, error: ok ? undefined : created?.error };
-    }
-  }
-
-  async function handleSavePost(data: object) {
-    if (editingPost) {
-      const { ok, data: updated } = await adminUpdatePost(editingPost.id, data);
-      if (ok) {
-        setPosts((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-        closeModal();
-        showToast('Blog post saved successfully');
-      } else {
-        showToast(updated?.error || 'Failed to save post', 'error');
-      }
-      return { ok, error: ok ? undefined : updated?.error };
-    } else {
-      const { ok, data: created } = await adminCreatePost(data);
-      if (ok) {
-        setPosts((prev) => [created, ...prev]);
-        closeModal();
-        showToast('Blog post created successfully');
-      } else {
-        showToast(created?.error || 'Failed to create post', 'error');
-      }
-      return { ok, error: ok ? undefined : created?.error };
-    }
-  }
-
-  // ----- Render: auth loading -----
-
-  if (!authChecked) {
-    return (
-      <div className="flex justify-center items-center py-32">
-        <span className="loading loading-spinner loading-lg text-primary" />
-      </div>
-    );
-  }
-
-  // ----- Render: not authorised -----
-
-  if (!user || user.role !== 'ADMIN') {
-    return (
-      <div className="flex flex-col items-center py-32 gap-4 text-center px-4">
-        <span className="text-5xl">🔒</span>
-        <h2 className="text-2xl font-bold">Admin access required</h2>
-        <p className="opacity-60">Log in with an admin account to reach this page.</p>
-        <a href={lang === 'sr' ? '/sr/login' : '/login'} className="btn btn-primary mt-2">
-          Log In
-        </a>
-      </div>
-    );
-  }
-
-  // ----- Render: dashboard -----
+  const find = (kind: Kind, id: string) => items[kind].find((x) => x.id === id);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-12">
-      {/* Header */}
       <div className="flex items-center justify-between mb-8 flex-wrap gap-4">
         <div>
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="opacity-60 text-sm mt-1">
-            Logged in as <strong>{user.firstName || user.email}</strong>
-          </p>
+          <p className="opacity-60 text-sm mt-1">Logged in as <strong>{user.firstName || user.email}</strong></p>
         </div>
-        <button
-          className="btn btn-primary"
-          onClick={tab === 'recipes' ? openNewRecipe : openNewPost}
-        >
+        <button className="btn btn-primary" onClick={() => setEditing({ kind: tab, item: null })}>
           + New {tab === 'recipes' ? 'Recipe' : 'Post'}
         </button>
       </div>
 
-      {/* Tabs */}
       <div role="tablist" className="tabs tabs-box mb-6 w-fit">
-        <button
-          role="tab"
-          className={`tab ${tab === 'recipes' ? 'tab-active' : ''}`}
-          onClick={() => setTab('recipes')}
-        >
-          🍴 Recipes <span className="badge badge-sm ml-1">{recipes.length}</span>
-        </button>
-        <button
-          role="tab"
-          className={`tab ${tab === 'blog' ? 'tab-active' : ''}`}
-          onClick={() => setTab('blog')}
-        >
-          📝 Blog Posts <span className="badge badge-sm ml-1">{posts.length}</span>
-        </button>
+        {(['recipes', 'blog'] as const).map((kind) => (
+          <button key={kind} role="tab" className={`tab ${tab === kind ? 'tab-active' : ''}`} onClick={() => setTab(kind)}>
+            {kind === 'recipes' ? '🍴 Recipes' : '📝 Blog Posts'} <span className="badge badge-sm ml-1">{items[kind].length}</span>
+          </button>
+        ))}
       </div>
 
-      {/* Content */}
-      {dataLoading ? (
+      {loading ? (
         <div className="flex justify-center py-16">
           <span className="loading loading-spinner loading-lg text-primary" />
         </div>
@@ -337,8 +189,8 @@ export default function AdminDashboard({ lang }: { lang: string }) {
           rows={recipeRows}
           noun={{ one: 'recipe', many: 'recipes', emoji: '🍴' }}
           showCategory
-          onEdit={(id) => openEditRecipe(recipes.find((r) => r.id === id))}
-          onDelete={handleDeleteRecipe}
+          onEdit={(id) => setEditing({ kind: 'recipes', item: find('recipes', id) })}
+          onDelete={(id, title) => handleDelete('recipes', id, title)}
           onBulk={(ids, action) => handleBulk('recipes', ids, action)}
           onToggleFeatured={handleToggleFeatured}
           onReorder={handleReorder}
@@ -348,38 +200,25 @@ export default function AdminDashboard({ lang }: { lang: string }) {
           key="posts"
           rows={postRows}
           noun={{ one: 'post', many: 'posts', emoji: '📝' }}
-          onEdit={(id) => openEditPost(posts.find((p) => p.id === id))}
-          onDelete={handleDeletePost}
+          onEdit={(id) => setEditing({ kind: 'blog', item: find('blog', id) })}
+          onDelete={(id, title) => handleDelete('blog', id, title)}
           onBulk={(ids, action) => handleBulk('blog', ids, action)}
         />
       )}
 
-      {/* Modal — native <dialog> with daisyUI classes: Esc closes it, focus stays inside */}
-      <dialog ref={dialogRef} className="modal" onClose={closeModal}>
-        {modalOpen && (
+      <dialog ref={dialogRef} className="modal" onClose={() => setEditing(null)}>
+        {editing && (
           <div className="modal-box max-w-2xl max-h-[92vh]">
             <form method="dialog">
-              <button className="btn btn-sm btn-circle btn-ghost absolute right-3 top-3 z-10" aria-label="Close">
-                ✕
-              </button>
+              <button className="btn btn-sm btn-circle btn-ghost absolute right-3 top-3 z-10" aria-label="Close">✕</button>
             </form>
-            {modalTab === 'recipes' ? (
-              <RecipeForm
-                initial={editingRecipe}
-                categories={categories}
-                onSave={handleSaveRecipe}
-                onCancel={closeModal}
-              />
+            {editing.kind === 'recipes' ? (
+              <RecipeForm initial={editing.item} categories={categories} onSave={handleSave} onCancel={() => setEditing(null)} />
             ) : (
-              <BlogForm
-                initial={editingPost}
-                onSave={handleSavePost}
-                onCancel={closeModal}
-              />
+              <BlogForm initial={editing.item} onSave={handleSave} onCancel={() => setEditing(null)} />
             )}
           </div>
         )}
-        {/* Clicking the backdrop closes the modal */}
         <form method="dialog" className="modal-backdrop">
           <button>close</button>
         </form>
@@ -387,3 +226,4 @@ export default function AdminDashboard({ lang }: { lang: string }) {
     </div>
   );
 }
+

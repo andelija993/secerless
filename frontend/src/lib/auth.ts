@@ -1,9 +1,4 @@
-// Client-side helper for talking to the auth endpoints.
-// These run in the browser (React islands), so requests must include
-// `credentials: 'include'` — that's what tells the browser to send/accept
-// the httpOnly JWT cookie set by the Express backend.
-
-import { API_URL } from './api';
+import { request } from './api';
 
 export interface AuthUser {
   id: string;
@@ -14,37 +9,18 @@ export interface AuthUser {
   role: 'USER' | 'ADMIN';
 }
 
-async function authFetch(path: string, options: RequestInit = {}): Promise<{ ok: boolean; data: any }> {
-  const res = await fetch(`${API_URL}${path}`, {
-    ...options,
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-  });
-  const data = res.status === 204 ? null : await res.json().catch(() => null);
-  return { ok: res.ok, data };
-}
+export const login = (email: string, password: string) => request('/auth/login', 'POST', { email, password });
 
-export async function login(email: string, password: string) {
-  return authFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
-}
+export const register = (email: string, password: string, firstName: string, lastName: string) =>
+  request('/auth/register', 'POST', { email, password, firstName, lastName });
 
-export async function register(email: string, password: string, firstName: string, lastName: string) {
-  return authFetch('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify({ email, password, firstName, lastName }),
-  });
-}
-
-export async function logout() {
-  return authFetch('/auth/logout', { method: 'POST' });
-}
+export const logout = () => request('/auth/logout', 'POST');
 
 export async function getMe(): Promise<AuthUser | null> {
-  const { ok, data } = await authFetch('/auth/me');
+  const { ok, data } = await request<AuthUser>('/auth/me');
   return ok ? data : null;
 }
 
-export async function updateMe(fields: { firstName?: string; lastName?: string; avatarUrl?: string }) {
-  return authFetch('/auth/me', { method: 'PUT', body: JSON.stringify(fields) });
-}
+export const updateMe = (fields: { firstName?: string; lastName?: string; avatarUrl?: string }) =>
+  request('/auth/me', 'PUT', fields);
 

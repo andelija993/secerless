@@ -1,9 +1,8 @@
 ---
-// RecipesIndexView — shared /recipes and /sr/recipes listing with category filter chips.
 import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
 import { getRecipes } from '../lib/api';
 import FavoriteButton from './FavoriteButton';
-import { coverFraming, frameCss, optimizeImage } from '../lib/imageFrame';
+import { coverPos, posCss, optimizeImage } from '../lib/image';
 
 interface Props {
   lang: Lang;
@@ -55,7 +54,7 @@ const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w
               loading="lazy"
               decoding="async"
               class="h-full w-full object-cover transition-[scale] duration-700 group-hover:scale-110"
-              style={frameCss(coverFraming(r))}
+              style={posCss(coverPos(r))}
             />
             <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
             {r.category && (
@@ -87,7 +86,6 @@ const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w
 
   {recipes.length === 0 && <p class="text-center opacity-60 py-16">{t('recipes.empty')}</p>}
 
-  <!-- Pagination (daisyUI join, filled in by the script below) -->
   <nav
     id="recipe-pagination"
     class="mt-14 flex justify-center"
@@ -184,7 +182,6 @@ const FALLBACK = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w
     })
   );
 
-  // Support links like /recipes?category=dessert&page=2
   const params = new URLSearchParams(window.location.search);
   const initialCat = params.get('category');
   if (initialCat && [...chips].some((c) => c.dataset.filter === initialCat)) filter = initialCat;

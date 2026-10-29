@@ -1,8 +1,7 @@
 ---
-// BlogIndexView — shared /blog and /sr/blog listing: one featured story + card grid.
 import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
 import { getPosts, type BlogPostSummary } from '../lib/api';
-import { optimizeImage } from '../lib/imageFrame';
+import { optimizeImage } from '../lib/image';
 
 interface Props {
   lang: Lang;

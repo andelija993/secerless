@@ -1,8 +1,3 @@
-// AdminTable — reusable table for the admin dashboard (recipes & blog posts).
-// Features: row checkboxes + "select all", bulk publish / draft / feature / delete,
-// search, status & category filters, date column with sorting,
-// and (recipes) a "Custom order" mode with drag & drop + ⭐ homepage toggle.
-
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { BulkAction } from '../lib/admin';
 
@@ -25,29 +20,19 @@ interface Props {
   showCategory?: boolean;
   onEdit: (id: string) => void;
   onDelete: (id: string, title: string) => void;
-  /** Returns true when the action succeeded (clears the selection). */
-  onBulk: (ids: string[], action: BulkAction) => Promise<boolean>;
-  /** Enables ⭐ column + feature bulk actions. */
-  onToggleFeatured?: (id: string, featured: boolean) => void;
-  /** Enables the "Custom order" sort with drag & drop. Receives ALL ids in the new order. */
-  onReorder?: (ids: string[]) => Promise<boolean>;
+  onBulk: (ids: string[], action: BulkAction) => Promise<boolean>; // true = success
+  onToggleFeatured?: (id: string, featured: boolean) => void; // enables ⭐ column
+  onReorder?: (ids: string[]) => Promise<boolean>; // enables custom order
 }
 
 type StatusFilter = 'all' | 'published' | 'draft' | 'featured';
 type Sort = 'custom' | 'newest' | 'oldest' | 'title';
 
-export function StatusChip({ published }: { published: boolean }) {
-  return (
-    <span
-      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold leading-none ${
-        published ? 'bg-success/15 text-success' : 'bg-warning/20 text-warning-content'
-      }`}
-    >
-      <span className={`h-1.5 w-1.5 rounded-full ${published ? 'bg-success' : 'bg-warning'}`} />
-      {published ? 'Published' : 'Draft'}
-    </span>
-  );
-}
+const StatusChip = ({ published }: { published: boolean }) => (
+  <span className={`badge badge-sm badge-soft whitespace-nowrap ${published ? 'badge-success' : 'badge-warning'}`}>
+    {published ? 'Published' : 'Draft'}
+  </span>
+);
 
 const formatDate = (d: string) =>
   new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -145,7 +130,6 @@ export default function AdminTable({
     if (ok) setSelected(new Set());
   }
 
-  // ----- ordering -----
   const currentIds = () => orderedRows.map((r) => r.id);
 
   function moveTo(id: string, targetIndex: number) {
@@ -241,8 +225,6 @@ export default function AdminTable({
           Showing {filtered.length} of {rows.length}
         </span>
       </div>
-
-      {/* Reorder hint / save bar */}
       {canReorder && sort === 'custom' && (
         <div
           className={`flex flex-wrap items-center gap-3 rounded-2xl px-4 py-2 text-sm ${
@@ -265,8 +247,6 @@ export default function AdminTable({
           )}
         </div>
       )}
-
-      {/* Bulk action bar */}
       {selected.size > 0 && (
         <div className="sticky top-20 z-20 flex flex-wrap items-center gap-2 rounded-2xl border border-primary/30 bg-base-100/95 px-4 py-2 shadow-lg backdrop-blur">
           <span className="text-sm font-semibold mr-2">
@@ -291,7 +271,6 @@ export default function AdminTable({
         </div>
       )}
 
-      {/* Table */}
       {rows.length === 0 ? (
         <div className="text-center py-16 opacity-60">
           <p className="text-lg">No {noun.many} yet.</p>

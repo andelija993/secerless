@@ -1,6 +1,4 @@
-// Central translation dictionary.
-// Add new keys here whenever you add new UI text — both `en` and `sr` should
-// always have matching keys so nothing is ever left untranslated.
+// UI strings — keep the en and sr keys in sync
 
 export const languages = {
   en: 'English',
@@ -22,7 +20,6 @@ export const ui = {
       "What started as sugar-free treats has grown into all my favorite recipes — from my kitchen to yours, plus stories, tips, and a place to ask questions or collaborate.",
     'home.cta': 'Browse Recipes',
     'home.topRecipes': 'Top Recipes',
-    'home.sliderNote': '(This will become a proper animated carousel React island in Phase 8 👀)',
     'home.eyebrow': 'Home cooking · Sugar-free treats · Stories',
     'home.headline1': 'Recipes worth',
     'home.headline2': 'sharing.',
@@ -33,6 +30,8 @@ export const ui = {
     'home.categories': 'Find something tasty',
     'home.categoriesSub': "Browse by what you're craving.",
     'home.featuredEyebrow': 'Fresh from the kitchen',
+    'home.popularEyebrow': 'Loved by readers',
+    'home.popularTitle': 'Most popular recipes',
     'home.latestStories': 'Latest stories',
     'home.allPosts': 'All stories →',
     'home.allRecipes': 'All recipes →',
@@ -55,6 +54,8 @@ export const ui = {
     'contact.message': 'Message',
     'contact.messagePlaceholder': 'Your question or idea...',
     'contact.submit': 'Send Message',
+    'contact.sent': 'Thanks! Your message has been sent.',
+    'contact.failed': 'Sorry, the message could not be sent. Please try again.',
 
     'recipes.title': 'All Recipes',
     'recipes.subtitle': 'Every recipe from my kitchen — sugar-free treats, comfort food and family favourites.',
@@ -88,10 +89,8 @@ export const ui = {
     'register.genericError': 'Something went wrong. Please try again.',
 
     'favorites.title': 'My Favorites',
-    'favorites.empty': "Log in and start saving recipes — they'll show up here. (Phase 7 feature)",
 
     'admin.title': 'Admin Dashboard',
-    'admin.description': 'This area will let you create/edit recipes and blog posts. Protected by admin-only auth — built in Phase 5.',
 
     'footer.tagline': 'recipes, stories & collaboration',
     'footer.builtWith': 'Built with Astro, React & Tailwind',
@@ -130,7 +129,6 @@ export const ui = {
       'Sve je počelo kao stranica za deserte bez šećera, a preraslo je u sve moje omiljene recepte — iz moje kuhinje za vašu, uz priče, savete i mesto gde možete da postavite pitanja ili predložite saradnju.',
     'home.cta': 'Pogledaj recepte',
     'home.topRecipes': 'Najbolji recepti',
-    'home.sliderNote': '(Ovo će postati pravi animirani slajder u Fazi 8 👀)',
     'home.eyebrow': 'Domaća kuhinja · Slatkiši bez šećera · Priče',
     'home.headline1': 'Recepti vredni',
     'home.headline2': 'deljenja.',
@@ -141,6 +139,8 @@ export const ui = {
     'home.categories': 'Pronađi nešto ukusno',
     'home.categoriesSub': 'Izaberi po tome šta ti se jede.',
     'home.featuredEyebrow': 'Sveže iz kuhinje',
+    'home.popularEyebrow': 'Omiljeno kod čitalaca',
+    'home.popularTitle': 'Najpopularniji recepti',
     'home.latestStories': 'Najnovije priče',
     'home.allPosts': 'Sve priče →',
     'home.allRecipes': 'Svi recepti →',
@@ -163,6 +163,8 @@ export const ui = {
     'contact.message': 'Poruka',
     'contact.messagePlaceholder': 'Vaše pitanje ili ideja...',
     'contact.submit': 'Pošalji poruku',
+    'contact.sent': 'Hvala! Vaša poruka je poslata.',
+    'contact.failed': 'Nažalost, poruka nije poslata. Pokušajte ponovo.',
 
     'recipes.title': 'Svi recepti',
     'recipes.subtitle': 'Svi recepti iz moje kuhinje — slatkiši bez šećera, domaća jela i porodični favoriti.',
@@ -196,10 +198,8 @@ export const ui = {
     'register.genericError': 'Nešto nije u redu. Pokušajte ponovo.',
 
     'favorites.title': 'Moji omiljeni recepti',
-    'favorites.empty': 'Prijavite se i počnite da čuvate recepte — pojaviće se ovde. (Funkcija u Fazi 7)',
 
     'admin.title': 'Admin panel',
-    'admin.description': 'Ovde ćete moći da kreirate/menjate recepte i blog objave. Zaštićeno admin prijavom — gradimo u Fazi 5.',
 
     'footer.tagline': 'recepti, priče i saradnja',
     'footer.builtWith': 'Napravljeno pomoću Astro, React i Tailwind',

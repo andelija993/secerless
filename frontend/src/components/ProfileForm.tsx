@@ -2,36 +2,16 @@ import { useEffect, useState } from 'react';
 import { useTranslations, type Lang } from '../i18n/utils';
 import { getMe, updateMe } from '../lib/auth';
 
-interface Props {
-  lang: Lang;
-}
-
-interface ProfileFields {
-  firstName: string;
-  lastName: string;
-  avatarUrl: string;
-}
-
-const emptyForm: ProfileFields = { firstName: '', lastName: '', avatarUrl: '' };
-
-export default function ProfileForm({ lang }: Props) {
+export default function ProfileForm({ lang }: { lang: Lang }) {
   const t = useTranslations(lang);
-  const [form, setForm] = useState<ProfileFields>(emptyForm);
+  const [form, setForm] = useState({ firstName: '', lastName: '', avatarUrl: '' });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     getMe()
-      .then((user) => {
-        if (user) {
-          setForm({
-            firstName: user.firstName ?? '',
-            lastName: user.lastName ?? '',
-            avatarUrl: user.avatarUrl ?? '',
-          });
-        }
-      })
+      .then((user) => user && setForm({ firstName: user.firstName ?? '', lastName: user.lastName ?? '', avatarUrl: user.avatarUrl ?? '' }))
       .finally(() => setLoading(false));
   }, []);
 
@@ -46,9 +26,13 @@ export default function ProfileForm({ lang }: Props) {
     }
   }
 
-  if (loading) {
-    return <p className="text-center opacity-60">…</p>;
-  }
+  if (loading) return <p className="text-center opacity-60">…</p>;
+
+  const fields = [
+    { name: 'firstName', type: 'text', label: t('profile.firstName') },
+    { name: 'lastName', type: 'text', label: t('profile.lastName') },
+    { name: 'avatarUrl', type: 'url', label: t('profile.pictureUrl'), placeholder: 'https://...' },
+  ] as const;
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -58,44 +42,18 @@ export default function ProfileForm({ lang }: Props) {
             {form.avatarUrl ? (
               <img src={form.avatarUrl} alt="Profile" />
             ) : (
-              <span className="text-2xl font-semibold">
-                {(form.firstName?.[0] ?? '') + (form.lastName?.[0] ?? '') || '?'}
-              </span>
+              <span className="text-2xl font-semibold">{(form.firstName[0] ?? '') + (form.lastName[0] ?? '') || '?'}</span>
             )}
           </div>
         </div>
       </div>
 
-      <label className="fieldset">
-        <span className="fieldset-legend justify-start">{t('profile.firstName')}</span>
-        <input
-          type="text"
-          className="input w-full"
-          value={form.firstName}
-          onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-        />
-      </label>
-
-      <label className="fieldset">
-        <span className="fieldset-legend justify-start">{t('profile.lastName')}</span>
-        <input
-          type="text"
-          className="input w-full"
-          value={form.lastName}
-          onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-        />
-      </label>
-
-      <label className="fieldset">
-        <span className="fieldset-legend justify-start">{t('profile.pictureUrl')}</span>
-        <input
-          type="url"
-          className="input w-full"
-          placeholder="https://..."
-          value={form.avatarUrl}
-          onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })}
-        />
-      </label>
+      {fields.map(({ name, label, ...props }) => (
+        <label key={name} className="fieldset">
+          <span className="fieldset-legend justify-start">{label}</span>
+          <input {...props} className="input w-full" value={form[name]} onChange={(e) => setForm({ ...form, [name]: e.target.value })} />
+        </label>
+      ))}
 
       <button type="submit" className="btn btn-primary mt-2" disabled={saving}>
         {saved ? `✅ ${t('profile.saved')}` : saving ? '...' : t('profile.save')}

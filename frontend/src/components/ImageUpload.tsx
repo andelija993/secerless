@@ -1,19 +1,10 @@
-// ImageUpload — drag-and-drop / click file picker that immediately uploads the
-// chosen image to POST /api/upload (Cloudinary) and calls onUpload(url) on success.
-// Drop-in replacement for the old plain <input type="url"> fields in RecipeForm / BlogForm.
-
 import { useRef, useState } from 'react';
-
-const API_URL = (import.meta as any).env?.PUBLIC_API_URL ?? 'http://localhost:4000/api';
+import { API_URL } from '../lib/api';
 
 interface Props {
-  /** Current image URL (pre-filled when editing an existing record). */
   value: string;
-  /** Called once the upload completes successfully with the Cloudinary secure URL. */
   onUpload: (url: string) => void;
-  /** Heading above the drop zone. */
   label?: string;
-  /** Small explanation under the heading. */
   hint?: string;
 }
 
@@ -22,28 +13,17 @@ export default function ImageUpload({ value, onUpload, label = 'Cover Image', hi
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
 
-  async function handleFile(file: File) {
+  async function upload(file?: File) {
     if (!file) return;
     setError('');
     setUploading(true);
-
-    const form = new FormData();
-    form.append('image', file);
-
     try {
-      const res = await fetch(`${API_URL}/upload`, {
-        method: 'POST',
-        body: form,
-        credentials: 'include', // send the auth cookie
-      });
-
+      const body = new FormData();
+      body.append('image', file);
+      const res = await fetch(`${API_URL}/upload`, { method: 'POST', body, credentials: 'include' });
       const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error ?? `Upload failed (${res.status})`);
-      } else {
-        onUpload(data.url);
-      }
+      if (res.ok) onUpload(data.url);
+      else setError(data.error ?? `Upload failed (${res.status})`);
     } catch {
       setError('Network error — is the backend running?');
     } finally {
@@ -51,32 +31,19 @@ export default function ImageUpload({ value, onUpload, label = 'Cover Image', hi
     }
   }
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (file) handleFile(file);
-  }
-
-  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (file) handleFile(file);
-  }
-
-  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
-    e.preventDefault();
-  }
-
   return (
     <div className="flex flex-col gap-2">
       <span className="fieldset-legend justify-start">{label}</span>
       {hint && <span className="text-xs opacity-60 -mt-1">{hint}</span>}
 
-      {/* Drop zone */}
       <div
         className="border-2 border-dashed border-base-300 rounded-xl p-4 text-center cursor-pointer hover:border-primary transition-colors"
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
         onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault();
+          upload(e.dataTransfer.files?.[0]);
+        }}
       >
         {uploading ? (
           <div className="flex flex-col items-center gap-2 py-4">
@@ -94,30 +61,17 @@ export default function ImageUpload({ value, onUpload, label = 'Cover Image', hi
           </div>
         ) : (
           <div className="py-6 flex flex-col items-center gap-2 opacity-60">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
             </svg>
             <p className="text-sm">Drag & drop an image here, or <span className="text-primary font-medium">click to browse</span></p>
-            <p className="text-xs">PNG, JPG, WEBP — max 10 MB</p>
+            <p className="text-xs">PNG, JPG, WEBP — max 25 MB</p>
           </div>
         )}
       </div>
 
-      {error && (
-        <div className="alert alert-error text-sm py-2">
-          <span>{error}</span>
-        </div>
-      )}
-
-      {/* Hidden file input */}
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleChange}
-      />
+      {error && <div className="alert alert-error text-sm py-2"><span>{error}</span></div>}
+      <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={(e) => upload(e.target.files?.[0])} />
     </div>
   );
 }

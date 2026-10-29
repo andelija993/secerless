@@ -1,14 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { coverFraming, frameStyle, optimizeImage } from '../lib/imageFrame';
+import { coverPos, posStyle, optimizeImage } from '../lib/image';
 
 interface Recipe {
   slug: string;
   title: string;
   description?: string | null;
   imageUrl?: string | null;
-  imagePosX?: number;
   imagePosY?: number;
-  imageZoom?: number;
   category?: { name?: string } | null;
 }
 
@@ -51,7 +49,6 @@ export default function TopRecipesSlider({ recipes, basePath }: Props) {
         if (e.key === 'ArrowRight') next();
       }}
     >
-      {/* Slides (cross-fade) */}
       <div className="relative h-[440px] sm:h-[520px]">
         {safeRecipes.map((recipe, index) => (
           <a
@@ -67,7 +64,7 @@ export default function TopRecipesSlider({ recipes, basePath }: Props) {
               src={optimizeImage(recipe.imageUrl, 1400) ?? '/logo.png'}
               alt={recipe.title}
               decoding="async"
-              style={frameStyle(coverFraming(recipe))}
+              style={posStyle(coverPos(recipe))}
               className={`h-full w-full object-cover transition-[scale] duration-[6000ms] ease-out ${
                 index === current ? 'scale-105' : 'scale-100'
               }`}
@@ -91,7 +88,6 @@ export default function TopRecipesSlider({ recipes, basePath }: Props) {
         ))}
       </div>
 
-      {/* Controls */}
       {count > 1 && (
         <div className="absolute bottom-6 right-6 z-20 flex items-center gap-4 sm:bottom-10 sm:right-10">
           <div className="hidden sm:flex items-center gap-2">
@@ -128,7 +124,6 @@ export default function TopRecipesSlider({ recipes, basePath }: Props) {
         </div>
       )}
 
-      {/* Thumbnails (desktop) */}
       {count > 1 && (
         <div className="absolute right-6 top-6 z-20 hidden lg:flex flex-col gap-3">
           {safeRecipes.map((r, index) => (
@@ -141,7 +136,7 @@ export default function TopRecipesSlider({ recipes, basePath }: Props) {
                 index === current ? 'ring-white scale-105' : 'ring-transparent opacity-60 hover:opacity-100'
               }`}
             >
-              <img src={optimizeImage(r.imageUrl, 160) ?? '/logo.png'} alt="" className="h-full w-full object-cover" style={frameStyle(coverFraming(r))} />
+              <img src={optimizeImage(r.imageUrl, 160) ?? '/logo.png'} alt="" className="h-full w-full object-cover" style={posStyle(coverPos(r))} />
             </button>
           ))}
         </div>

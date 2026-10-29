@@ -23,7 +23,6 @@ const langLinks = [
   { code: 'sr', label: 'SR', href: translatePath(Astro.url.pathname, 'sr') },
 ] as const;
 
-// Highlight the current section (home only matches exactly)
 const current = Astro.url.pathname.replace(/\/$/, '') || '/';
 function isActive(href: string) {
   const h = href.replace(/\/$/, '') || '/';
@@ -59,7 +58,6 @@ function isActive(href: string) {
     </ul>
 
     <div class="flex items-center gap-1">
-      <!-- Language switch (daisyUI join) -->
       <div class="join" role="group" aria-label="Language">
         {langLinks.map((l) => (
           <a
@@ -73,7 +71,6 @@ function isActive(href: string) {
         ))}
       </div>
 
-      <!-- Quick theme toggle -->
       <button
         type="button"
         id="theme-toggle"
@@ -84,7 +81,6 @@ function isActive(href: string) {
         <svg class="theme-icon-moon h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
 
-      <!-- Instagram icon (desktop) -->
       <a
         href={`https://instagram.com/${INSTAGRAM_HANDLE}`}
         target="_blank"

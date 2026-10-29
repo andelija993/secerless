@@ -1,11 +1,9 @@
 ---
-// RecipeDetailView — shared recipe page for EN and SR.
-// The recipe passed in is already localized (see localizeRecipe in lib/api.ts).
 import { useTranslations, useTranslatedPath, type Lang } from '../i18n/utils';
 import type { RecipeDetail } from '../lib/api';
 import FavoriteButton from './FavoriteButton';
 import RecipeHeroSlider from './RecipeHeroSlider';
-import { coverFraming, galleryFraming, optimizeImage } from '../lib/imageFrame';
+import { coverPos, galleryPos, optimizeImage } from '../lib/image';
 
 interface Props {
   recipe: RecipeDetail;
@@ -29,15 +27,13 @@ const headingText = (text: string) => text.replace(/^##\s*/, '');
 const ingredientCount = recipe.ingredients.filter((i) => !isHeading(i.text)).length;
 const stepItems = recipe.steps.filter((s) => !isHeading(s.text));
 
-// Hero slider: cover photo first, then the gallery photos
 const slides = [
-  { url: recipe.imageUrl ?? FALLBACK, alt: recipe.title, frame: coverFraming(recipe) },
-  ...(recipe.images ?? []).map((img, i) => ({ url: img.url, alt: img.caption ?? `${recipe.title} ${i + 2}`, frame: galleryFraming(img) })),
+  { url: recipe.imageUrl ?? FALLBACK, alt: recipe.title, posY: coverPos(recipe) },
+  ...(recipe.images ?? []).map((img, i) => ({ url: img.url, alt: img.caption ?? `${recipe.title} ${i + 2}`, posY: galleryPos(img) })),
 ];
 ---
 
 <article>
-  <!-- Hero -->
   <section class="relative -mt-[4.5rem] pt-[4.5rem] bg-blobs">
     <div class="max-w-6xl mx-auto px-4 pt-10 pb-14 grid gap-10 lg:grid-cols-2 items-center">
       <div class="reveal order-2 lg:order-1">
@@ -81,7 +77,6 @@ const slides = [
     </div>
   </section>
 
-  <!-- Ingredients + steps -->
   <section class="max-w-6xl mx-auto px-4 grid gap-10 lg:grid-cols-[0.85fr_1.15fr] items-start">
     <aside class="reveal lg:sticky lg:top-28 rounded-[2rem] bg-base-200 p-7 md:p-8">
       <h2 class="text-2xl font-semibold">{t('recipes.ingredients')}</h2>
@@ -119,7 +114,6 @@ const slides = [
     </div>
   </section>
 
-  <!-- Video (e.g. imported Instagram reel) -->
   {recipe.videoUrl && (
     <section id="video" class="scroll-mt-28 max-w-6xl mx-auto px-4 pt-20 reveal">
       <div class="rounded-[2.5rem] bg-base-200 p-6 md:p-10 grid gap-8 md:grid-cols-[1fr_auto] items-center">
